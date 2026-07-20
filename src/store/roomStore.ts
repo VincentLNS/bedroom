@@ -147,7 +147,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     set({ pendingCatalogId: null, mode: 'orbit', dragging: false }),
 
   clearRoom: () =>
-    set({ items: [], selectedId: null, dragging: false }),
+    set({ items: [], selectedId: null, dragging: false, importWarnings: [] }),
 
   replaceLayout: (items) => {
     const warnings: string[] = []

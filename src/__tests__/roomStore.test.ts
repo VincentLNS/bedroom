@@ -61,6 +61,21 @@ describe('roomStore', () => {
     expect(useRoomStore.getState().selectedId).toBeNull()
   })
 
+  it('clearRoom clears importWarnings', () => {
+    useRoomStore.getState().replaceLayout([
+      {
+        instanceId: 'a',
+        catalogId: 'unknown-sofa',
+        cx: 4,
+        cz: 5,
+        rot: 90,
+      },
+    ])
+    expect(useRoomStore.getState().importWarnings).toHaveLength(1)
+    useRoomStore.getState().clearRoom()
+    expect(useRoomStore.getState().importWarnings).toEqual([])
+  })
+
   it('select enters edit mode and clears pending', () => {
     useRoomStore.getState().armPlace('bed-twin')
     useRoomStore.getState().place('plant-pot', 5, 5, 0)
