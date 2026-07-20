@@ -5,15 +5,15 @@ import { getCatalogItem } from '../catalog'
 import {
   canPlace,
   footprintCells,
+  PLACE_ROT,
   worldToCell,
 } from '../placement'
-import { useRoomStore, type Rotation } from '../store/roomStore'
+import { useRoomStore } from '../store/roomStore'
 import { PrimitiveFurniture } from './PrimitiveFurniture'
 import { footprintWorldCenter } from './PlacedFurniture'
 
 const VALID_TINT = '#9fe6c3'
 const INVALID_TINT = '#f08080'
-export const PLACE_ROT: Rotation = 0
 
 export function GhostPreview() {
   const pendingCatalogId = useRoomStore((s) => s.pendingCatalogId)

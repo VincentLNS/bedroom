@@ -1,8 +1,7 @@
 import type { ThreeEvent } from '@react-three/fiber'
 import { getCatalogItem } from '../catalog'
-import { canPlace, footprintCells, worldToCell } from '../placement'
+import { canPlace, footprintCells, PLACE_ROT, worldToCell } from '../placement'
 import { useRoomStore } from '../store/roomStore'
-import { PLACE_ROT } from '../furniture/GhostPreview'
 import { ROOM_DEPTH_M, ROOM_WIDTH_M } from '../room/constants'
 
 /**
@@ -15,15 +14,16 @@ export function PlacementController() {
   const place = useRoomStore((s) => s.place)
   const getOccupied = useRoomStore((s) => s.getOccupied)
 
-  const placing = mode === 'place' && pendingCatalogId != null
+  const catalog =
+    pendingCatalogId != null ? getCatalogItem(pendingCatalogId) : undefined
+  const placing = mode === 'place' && catalog?.visual.type === 'primitive'
 
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
-    if (!placing || !pendingCatalogId) return
+    if (!placing || !pendingCatalogId || !catalog) return
 
     e.stopPropagation()
 
-    const catalog = getCatalogItem(pendingCatalogId)
-    if (!catalog) return
+    if (catalog.visual.type !== 'primitive') return
 
     const { cx, cz } = worldToCell(e.point.x, e.point.z)
     const cells = footprintCells(cx, cz, PLACE_ROT, catalog.footprint)

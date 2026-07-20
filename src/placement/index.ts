@@ -1,3 +1,4 @@
+export { PLACE_ROT } from './constants'
 export {
   CELL_SIZE,
   GRID_COLS,

@@ -1,3 +1,5 @@
+import { useLayoutEffect, useRef } from 'react'
+import { Mesh, type Group } from 'three'
 import { getCatalogItem } from '../catalog'
 import { cellToWorld, footprintCells } from '../placement'
 import { useRoomStore, type Rotation } from '../store/roomStore'
@@ -26,9 +28,21 @@ export function footprintWorldCenter(
 
 export function PlacedFurniture() {
   const items = useRoomStore((s) => s.items)
+  const mode = useRoomStore((s) => s.mode)
+  const groupRef = useRef<Group>(null)
+
+  useLayoutEffect(() => {
+    const group = groupRef.current
+    if (!group) return
+    // Placed meshes must not steal floor clicks while placing.
+    group.traverse((obj) => {
+      if (!(obj instanceof Mesh)) return
+      obj.raycast = mode === 'place' ? () => {} : Mesh.prototype.raycast
+    })
+  }, [mode, items])
 
   return (
-    <group>
+    <group ref={groupRef}>
       {items.map((item) => {
         const catalog = getCatalogItem(item.catalogId)
         if (!catalog || catalog.visual.type !== 'primitive') return null
