@@ -92,7 +92,7 @@ React shell
 
 ## 7. Room
 
-- Size: **3.0 × 4.5 m** (narrow × long; door→window on long axis) — see Louise amendment
+- Size: **4.0 × 5.5 m** (width × door→window depth) — see Louise amendment
 - Soft off-white walls, light wood floor
 - Door on one short wall (−Z); window on the opposite short wall (+Z) with dusty-rose curtains
 - Fixed paper lantern on ceiling; orbit-friendly framing; optional translucent ceiling

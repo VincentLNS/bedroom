@@ -16,9 +16,9 @@ Long narrow girl’s room; door and window on opposite short walls.
 
 | Constant | New value | Notes |
 |----------|-----------|--------|
-| `ROOM_WIDTH_M` (X, short axis) | **3.0** | ~narrow width |
-| `ROOM_DEPTH_M` (Z, door→window) | **4.5** | long axis |
-| `CELL_SIZE` | **0.5** (unchanged) | → grid **6 × 9** |
+| `ROOM_WIDTH_M` (X, short axis) | **4.0** | largeur confortable (était 3.0, trop étroit) |
+| `ROOM_DEPTH_M` (Z, door→window) | **5.5** | axe long porte→fenêtre |
+| `CELL_SIZE` | **0.5** (unchanged) | → grille **8 × 11** |
 | Door | −Z short wall | clearance updated for 6-wide grid |
 | Window | +Z short wall | dark frame + dusty-rose curtains |
 | Floor | light wood planks | |

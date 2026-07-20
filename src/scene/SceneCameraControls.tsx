@@ -67,7 +67,7 @@ export function SceneCameraControls() {
         minPolarAngle={0.35}
         maxPolarAngle={Math.PI / 2.05}
         minDistance={3}
-        maxDistance={12}
+        maxDistance={16}
         // Gauche = orbit seulement hors pose ; droit = orbit toujours (comme les planners).
         mouseButtons={
           interactBusy

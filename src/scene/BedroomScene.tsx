@@ -9,7 +9,7 @@ import { SceneCameraControls } from './SceneCameraControls'
 
 export function BedroomScene() {
   return (
-    <Canvas camera={{ position: [3.2, 4.2, 5.2], fov: 42 }}>
+    <Canvas camera={{ position: [4.5, 5.2, 6.5], fov: 42 }}>
       <color attach="background" args={['#f7efe8']} />
       <SceneLights />
       <Room />
