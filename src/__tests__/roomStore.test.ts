@@ -42,8 +42,8 @@ describe('roomStore', () => {
   it('moves selected ignoring self collision', () => {
     useRoomStore.getState().place('plant-pot', 5, 5, 0)
     const id = useRoomStore.getState().items[0].instanceId
-    expect(useRoomStore.getState().move(id, 6, 5)).toBe(true)
-    expect(useRoomStore.getState().items[0].cx).toBe(6)
+    expect(useRoomStore.getState().move(id, 4, 5)).toBe(true)
+    expect(useRoomStore.getState().items[0].cx).toBe(4)
   })
 
   it('clearRoom empties items', () => {
