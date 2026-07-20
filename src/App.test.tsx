@@ -14,6 +14,7 @@ describe('App', () => {
       selectedId: null,
       mode: 'orbit',
       pendingCatalogId: null,
+      dragging: false,
     })
   })
 
@@ -54,6 +55,7 @@ describe('App', () => {
       ],
       pendingCatalogId: 'bed-twin',
       mode: 'place',
+      selectedId: 'a',
     })
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
 
@@ -65,6 +67,30 @@ describe('App', () => {
     expect(state.items).toEqual([])
     expect(state.pendingCatalogId).toBeNull()
     expect(state.mode).toBe('orbit')
+    expect(state.selectedId).toBeNull()
     confirmSpy.mockRestore()
+  })
+
+  it('shows selection toolbar when an item is selected', () => {
+    useRoomStore.setState({
+      items: [
+        {
+          instanceId: 'a',
+          catalogId: 'plant-pot',
+          cx: 5,
+          cz: 5,
+          rot: 0,
+        },
+      ],
+      selectedId: 'a',
+      mode: 'edit',
+    })
+    render(<App />)
+    expect(screen.getByRole('toolbar', { name: 'Selection' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Rotate' }))
+    expect(useRoomStore.getState().items[0].rot).toBe(90)
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    expect(useRoomStore.getState().items).toHaveLength(0)
+    expect(useRoomStore.getState().selectedId).toBeNull()
   })
 })

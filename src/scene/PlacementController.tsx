@@ -5,13 +5,16 @@ import { useRoomStore } from '../store/roomStore'
 import { ROOM_DEPTH_M, ROOM_WIDTH_M } from '../room/constants'
 
 /**
- * Invisible floor catcher: places pending catalog item on pointer down
- * when mode is 'place' and the footprint is free.
+ * Invisible floor catcher:
+ * - place mode: places pending catalog item on pointer down when free
+ * - edit mode: clears selection on empty-floor click (no place unless pending)
  */
 export function PlacementController() {
   const mode = useRoomStore((s) => s.mode)
   const pendingCatalogId = useRoomStore((s) => s.pendingCatalogId)
   const place = useRoomStore((s) => s.place)
+  const select = useRoomStore((s) => s.select)
+  const dragging = useRoomStore((s) => s.dragging)
   const getOccupied = useRoomStore((s) => s.getOccupied)
 
   const catalog =
@@ -19,17 +22,27 @@ export function PlacementController() {
   const placing = mode === 'place' && catalog?.visual.type === 'primitive'
 
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
-    if (!placing || !pendingCatalogId || !catalog) return
+    // Drag-move owns the gesture once started on furniture.
+    if (dragging) return
 
-    e.stopPropagation()
+    if (placing && pendingCatalogId && catalog) {
+      e.stopPropagation()
 
-    if (catalog.visual.type !== 'primitive') return
+      if (catalog.visual.type !== 'primitive') return
 
-    const { cx, cz } = worldToCell(e.point.x, e.point.z)
-    const cells = footprintCells(cx, cz, PLACE_ROT, catalog.footprint)
-    if (!canPlace(cells, getOccupied())) return
+      const { cx, cz } = worldToCell(e.point.x, e.point.z)
+      const cells = footprintCells(cx, cz, PLACE_ROT, catalog.footprint)
+      if (!canPlace(cells, getOccupied())) return
 
-    place(pendingCatalogId, cx, cz, PLACE_ROT)
+      place(pendingCatalogId, cx, cz, PLACE_ROT)
+      return
+    }
+
+    // Empty floor in edit: clear selection (do not place).
+    if (mode === 'edit') {
+      e.stopPropagation()
+      select(null)
+    }
   }
 
   return (

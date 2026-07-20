@@ -6,16 +6,22 @@ export type PrimitiveFurnitureProps = {
   footprint: [number, number]
   tint?: string
   opacity?: number
+  /** Mild emissive highlight when this instance is selected. */
+  selected?: boolean
 }
 
 const DEFAULT_TINT = '#c8d0d8'
+const SELECT_EMISSIVE = '#fff4dc'
+const SELECT_EMISSIVE_INTENSITY = 0.35
 
 function Mat({
   color,
   opacity = 1,
+  selected = false,
 }: {
   color: string
   opacity?: number
+  selected?: boolean
 }) {
   const transparent = opacity < 1
   return (
@@ -24,6 +30,8 @@ function Mat({
       transparent={transparent}
       opacity={opacity}
       depthWrite={!transparent}
+      emissive={selected ? SELECT_EMISSIVE : '#000000'}
+      emissiveIntensity={selected ? SELECT_EMISSIVE_INTENSITY : 0}
     />
   )
 }
@@ -34,11 +42,13 @@ function SoftBox({
   position,
   color,
   opacity = 1,
+  selected = false,
 }: {
   args: [number, number, number]
   position?: [number, number, number]
   color: string
   opacity?: number
+  selected?: boolean
 }) {
   const [w, h, d] = args
   const inset = 0.04
@@ -46,11 +56,11 @@ function SoftBox({
     <group position={position}>
       <mesh castShadow receiveShadow>
         <boxGeometry args={args} />
-        <Mat color={color} opacity={opacity} />
+        <Mat color={color} opacity={opacity} selected={selected} />
       </mesh>
       <mesh position={[0, h / 2 + 0.005, 0]} castShadow>
         <boxGeometry args={[w * (1 - inset), 0.02, d * (1 - inset)]} />
-        <Mat color={color} opacity={opacity} />
+        <Mat color={color} opacity={opacity} selected={selected} />
       </mesh>
     </group>
   )
@@ -61,6 +71,7 @@ export function PrimitiveFurniture({
   footprint,
   tint = DEFAULT_TINT,
   opacity = 1,
+  selected = false,
 }: PrimitiveFurnitureProps) {
   const [fw, fd] = footprint
   const w = fw * CELL_SIZE
@@ -77,17 +88,18 @@ export function PrimitiveFurniture({
             position={[0, frameH / 2, 0]}
             color={tint}
             opacity={opacity}
+            selected={selected}
           />
           <mesh position={[0, frameH + mattressH / 2, 0]} castShadow>
             <boxGeometry args={[w * 0.92, mattressH, d * 0.88]} />
-            <Mat color="#f5f0ea" opacity={opacity} />
+            <Mat color="#f5f0ea" opacity={opacity} selected={selected} />
           </mesh>
           <mesh
             position={[0, frameH + mattressH + 0.06, -d * 0.32]}
             castShadow
           >
             <boxGeometry args={[w * 0.78, 0.12, d * 0.18]} />
-            <Mat color="#efe4dc" opacity={opacity} />
+            <Mat color="#efe4dc" opacity={opacity} selected={selected} />
           </mesh>
         </group>
       )
@@ -100,7 +112,7 @@ export function PrimitiveFurniture({
         <group>
           <mesh position={[0, topY, 0]} castShadow>
             <boxGeometry args={[w * 0.95, topH, d * 0.9]} />
-            <Mat color={tint} opacity={opacity} />
+            <Mat color={tint} opacity={opacity} selected={selected} />
           </mesh>
           {(
             [
@@ -112,7 +124,7 @@ export function PrimitiveFurniture({
           ).map(([x, z], i) => (
             <mesh key={i} position={[x, topY / 2, z]} castShadow>
               <boxGeometry args={[leg, topY, leg]} />
-              <Mat color={tint} opacity={opacity} />
+              <Mat color={tint} opacity={opacity} selected={selected} />
             </mesh>
           ))}
         </group>
@@ -127,10 +139,11 @@ export function PrimitiveFurniture({
             position={[0, seatY, 0]}
             color={tint}
             opacity={opacity}
+            selected={selected}
           />
           <mesh position={[0, seatY + 0.28, -d * 0.28]} castShadow>
             <boxGeometry args={[w * 0.7, 0.5, 0.06]} />
-            <Mat color={tint} opacity={opacity} />
+            <Mat color={tint} opacity={opacity} selected={selected} />
           </mesh>
           {(
             [
@@ -142,7 +155,7 @@ export function PrimitiveFurniture({
           ).map(([x, z], i) => (
             <mesh key={i} position={[x, seatY / 2, z]} castShadow>
               <boxGeometry args={[0.04, seatY, 0.04]} />
-              <Mat color={tint} opacity={opacity} />
+              <Mat color={tint} opacity={opacity} selected={selected} />
             </mesh>
           ))}
         </group>
@@ -157,6 +170,7 @@ export function PrimitiveFurniture({
             position={[0, h / 2, 0]}
             color={tint}
             opacity={opacity}
+            selected={selected}
           />
           {[0.28, 0.55, 0.82].map((t) => (
             <mesh
@@ -165,7 +179,7 @@ export function PrimitiveFurniture({
               castShadow
             >
               <boxGeometry args={[w * 0.82, 0.03, d * 0.55]} />
-              <Mat color={tint} opacity={opacity} />
+              <Mat color={tint} opacity={opacity} selected={selected} />
             </mesh>
           ))}
         </group>
@@ -180,10 +194,11 @@ export function PrimitiveFurniture({
             position={[0, h / 2, 0]}
             color={tint}
             opacity={opacity}
+            selected={selected}
           />
           <mesh position={[0, h + 0.02, 0]} castShadow>
             <boxGeometry args={[w * 0.92, 0.04, d * 0.88]} />
-            <Mat color={tint} opacity={opacity} />
+            <Mat color={tint} opacity={opacity} selected={selected} />
           </mesh>
         </group>
       )
@@ -196,7 +211,7 @@ export function PrimitiveFurniture({
           receiveShadow
         >
           <circleGeometry args={[Math.min(w, d) * 0.48, 32]} />
-          <Mat color={tint} opacity={opacity} />
+          <Mat color={tint} opacity={opacity} selected={selected} />
         </mesh>
       )
     }
@@ -205,15 +220,15 @@ export function PrimitiveFurniture({
         <group>
           <mesh position={[0, 0.05, 0]} castShadow>
             <cylinderGeometry args={[0.12, 0.14, 0.08, 16]} />
-            <Mat color={tint} opacity={opacity} />
+            <Mat color={tint} opacity={opacity} selected={selected} />
           </mesh>
           <mesh position={[0, 0.7, 0]} castShadow>
             <cylinderGeometry args={[0.025, 0.025, 1.3, 8]} />
-            <Mat color={tint} opacity={opacity} />
+            <Mat color={tint} opacity={opacity} selected={selected} />
           </mesh>
           <mesh position={[0, 1.45, 0]} castShadow>
             <cylinderGeometry args={[0.18, 0.22, 0.28, 16]} />
-            <Mat color="#fff6e0" opacity={opacity} />
+            <Mat color="#fff6e0" opacity={opacity} selected={selected} />
           </mesh>
         </group>
       )
@@ -223,15 +238,15 @@ export function PrimitiveFurniture({
         <group>
           <mesh position={[0, 0.12, 0]} castShadow>
             <cylinderGeometry args={[0.14, 0.11, 0.24, 16]} />
-            <Mat color="#c4a882" opacity={opacity} />
+            <Mat color="#c4a882" opacity={opacity} selected={selected} />
           </mesh>
           <mesh position={[0, 0.42, 0]} castShadow>
             <sphereGeometry args={[0.22, 16, 12]} />
-            <Mat color={tint} opacity={opacity} />
+            <Mat color={tint} opacity={opacity} selected={selected} />
           </mesh>
           <mesh position={[0.1, 0.55, 0.05]} castShadow>
             <sphereGeometry args={[0.14, 12, 10]} />
-            <Mat color={tint} opacity={opacity} />
+            <Mat color={tint} opacity={opacity} selected={selected} />
           </mesh>
         </group>
       )
@@ -245,14 +260,15 @@ export function PrimitiveFurniture({
             position={[0, h / 2, 0]}
             color={tint}
             opacity={opacity}
+            selected={selected}
           />
           <mesh position={[-w * 0.2, h * 0.55, d * 0.2]} castShadow>
             <boxGeometry args={[w * 0.25, h * 0.35, 0.04]} />
-            <Mat color="#f0e8d8" opacity={opacity} />
+            <Mat color="#f0e8d8" opacity={opacity} selected={selected} />
           </mesh>
           <mesh position={[w * 0.2, h * 0.55, d * 0.2]} castShadow>
             <boxGeometry args={[w * 0.25, h * 0.35, 0.04]} />
-            <Mat color="#f0e8d8" opacity={opacity} />
+            <Mat color="#f0e8d8" opacity={opacity} selected={selected} />
           </mesh>
         </group>
       )
@@ -261,7 +277,7 @@ export function PrimitiveFurniture({
       return (
         <mesh position={[0, 0.22, 0]} castShadow scale={[1, 0.7, 1]}>
           <sphereGeometry args={[Math.min(w, d) * 0.42, 24, 16]} />
-          <Mat color={tint} opacity={opacity} />
+          <Mat color={tint} opacity={opacity} selected={selected} />
         </mesh>
       )
     }
@@ -271,11 +287,11 @@ export function PrimitiveFurniture({
         <group>
           <mesh position={[0, h / 2, 0]} castShadow>
             <boxGeometry args={[w * 0.55, h, 0.06]} />
-            <Mat color={tint} opacity={opacity} />
+            <Mat color={tint} opacity={opacity} selected={selected} />
           </mesh>
           <mesh position={[0, h / 2 + 0.05, 0.02]} castShadow>
             <boxGeometry args={[w * 0.42, h * 0.75, 0.02]} />
-            <Mat color="#dce8f2" opacity={opacity} />
+            <Mat color="#dce8f2" opacity={opacity} selected={selected} />
           </mesh>
         </group>
       )
@@ -286,15 +302,15 @@ export function PrimitiveFurniture({
         <group>
           <mesh position={[-s * 0.6, s / 2, 0]} castShadow>
             <boxGeometry args={[s, s, s]} />
-            <Mat color={tint} opacity={opacity} />
+            <Mat color={tint} opacity={opacity} selected={selected} />
           </mesh>
           <mesh position={[s * 0.5, s / 2, s * 0.3]} castShadow>
             <boxGeometry args={[s * 0.9, s * 0.9, s * 0.9]} />
-            <Mat color="#f0d080" opacity={opacity} />
+            <Mat color="#f0d080" opacity={opacity} selected={selected} />
           </mesh>
           <mesh position={[0, s * 1.2, -s * 0.2]} castShadow>
             <boxGeometry args={[s * 0.8, s * 0.8, s * 0.8]} />
-            <Mat color="#a8d4e8" opacity={opacity} />
+            <Mat color="#a8d4e8" opacity={opacity} selected={selected} />
           </mesh>
         </group>
       )

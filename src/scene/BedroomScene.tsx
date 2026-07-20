@@ -10,6 +10,8 @@ import { useRoomStore } from '../store/roomStore'
 
 export function BedroomScene() {
   const placing = useRoomStore((s) => s.mode === 'place')
+  const dragging = useRoomStore((s) => s.dragging)
+  const orbitLocked = placing || dragging
 
   return (
     <Canvas camera={{ position: [4, 5, 6], fov: 45 }}>
@@ -24,8 +26,8 @@ export function BedroomScene() {
         makeDefault
         target={[0, 0.8, 0]}
         maxPolarAngle={Math.PI / 2.05}
-        enableRotate={!placing}
-        enablePan={!placing}
+        enableRotate={!orbitLocked}
+        enablePan={!orbitLocked}
       />
     </Canvas>
   )

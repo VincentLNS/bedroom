@@ -50,4 +50,24 @@ describe('roomStore', () => {
     useRoomStore.getState().clearRoom()
     expect(useRoomStore.getState().items).toHaveLength(0)
   })
+
+  it('clearRoom also clears selectedId', () => {
+    useRoomStore.getState().place('plant-pot', 5, 5, 0)
+    const id = useRoomStore.getState().items[0].instanceId
+    useRoomStore.getState().select(id)
+    expect(useRoomStore.getState().selectedId).toBe(id)
+    useRoomStore.getState().clearRoom()
+    expect(useRoomStore.getState().selectedId).toBeNull()
+  })
+
+  it('select enters edit mode and clears pending', () => {
+    useRoomStore.getState().armPlace('bed-twin')
+    useRoomStore.getState().place('plant-pot', 5, 5, 0)
+    const id = useRoomStore.getState().items[0].instanceId
+    useRoomStore.getState().select(id)
+    const state = useRoomStore.getState()
+    expect(state.selectedId).toBe(id)
+    expect(state.mode).toBe('edit')
+    expect(state.pendingCatalogId).toBeNull()
+  })
 })

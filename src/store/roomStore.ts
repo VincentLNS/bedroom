@@ -19,11 +19,14 @@ type RoomState = {
   selectedId: string | null
   mode: RoomMode
   pendingCatalogId: string | null
+  /** True while drag-moving a selected item (disables orbit). */
+  dragging: boolean
   place: (catalogId: string, cx: number, cz: number, rot: Rotation) => boolean
   move: (instanceId: string, cx: number, cz: number) => boolean
   rotateSelected: () => boolean
   deleteSelected: () => void
   select: (id: string | null) => void
+  setDragging: (dragging: boolean) => void
   armPlace: (catalogId: string) => void
   clearPending: () => void
   clearRoom: () => void
@@ -49,6 +52,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   selectedId: null,
   mode: 'orbit',
   pendingCatalogId: null,
+  dragging: false,
 
   getOccupied: () => toOccupied(get().items),
 
@@ -113,17 +117,34 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     set((state) => ({
       items: state.items.filter((i) => i.instanceId !== selectedId),
       selectedId: null,
+      mode: 'orbit',
+      dragging: false,
     }))
   },
 
-  select: (id) => set({ selectedId: id }),
+  select: (id) =>
+    set({
+      selectedId: id,
+      mode: id ? 'edit' : 'orbit',
+      ...(id ? { pendingCatalogId: null } : {}),
+      dragging: false,
+    }),
+
+  setDragging: (dragging) => set({ dragging }),
 
   armPlace: (catalogId) =>
-    set({ pendingCatalogId: catalogId, mode: 'place' }),
+    set({
+      pendingCatalogId: catalogId,
+      mode: 'place',
+      selectedId: null,
+      dragging: false,
+    }),
 
-  clearPending: () => set({ pendingCatalogId: null, mode: 'orbit' }),
+  clearPending: () =>
+    set({ pendingCatalogId: null, mode: 'orbit', dragging: false }),
 
-  clearRoom: () => set({ items: [] }),
+  clearRoom: () =>
+    set({ items: [], selectedId: null, dragging: false }),
 
-  replaceLayout: (items) => set({ items }),
+  replaceLayout: (items) => set({ items, selectedId: null, dragging: false }),
 }))
