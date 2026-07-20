@@ -46,25 +46,25 @@ export function parseLayout(
   data: unknown,
 ): { ok: true; file: BedroomFileV1 } | { ok: false; error: string } {
   if (!data || typeof data !== 'object') {
-    return { ok: false, error: 'Expected a bedroom layout object' }
+    return { ok: false, error: 'Objet de plan de chambre attendu' }
   }
 
   const record = data as Record<string, unknown>
 
   if (record.version !== 1) {
-    return { ok: false, error: 'Unsupported bedroom file version' }
+    return { ok: false, error: 'Version de fichier non prise en charge' }
   }
 
   if (record.roomId !== 'girl-bedroom-v1') {
-    return { ok: false, error: 'Unsupported room id' }
+    return { ok: false, error: 'Identifiant de chambre non pris en charge' }
   }
 
   if (!Array.isArray(record.items)) {
-    return { ok: false, error: 'Invalid items array' }
+    return { ok: false, error: 'Liste de meubles invalide' }
   }
 
   if (!record.items.every(isBedroomFileItemV1)) {
-    return { ok: false, error: 'Invalid item in layout' }
+    return { ok: false, error: 'Meuble invalide dans le plan' }
   }
 
   return {

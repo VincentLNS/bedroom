@@ -108,7 +108,7 @@ describe('roomStore', () => {
     expect(state.items).toHaveLength(1)
     expect(state.items[0].catalogId).toBe('bed-louise')
     expect(state.importWarnings).toEqual([
-      'Skipped unknown furniture: unknown-sofa',
+      'Meuble inconnu ignoré : unknown-sofa',
     ])
   })
 })

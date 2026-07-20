@@ -153,7 +153,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     const warnings: string[] = []
     const valid = items.filter((item) => {
       if (getCatalogItem(item.catalogId)) return true
-      const message = `Skipped unknown furniture: ${item.catalogId}`
+      const message = `Meuble inconnu ignoré : ${item.catalogId}`
       warnings.push(message)
       console.warn(message)
       return false

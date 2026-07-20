@@ -39,7 +39,7 @@ export function TopBar() {
   }, [])
 
   const handleClearRoom = () => {
-    if (window.confirm('Clear all furniture from the room?')) {
+    if (window.confirm('Vider toute la chambre ?')) {
       clearRoom()
       clearPending()
     }
@@ -66,7 +66,7 @@ export function TopBar() {
 
     if (
       !window.confirm(
-        'Import this layout? Current furniture will be replaced.',
+        'Importer ce plan ? Les meubles actuels seront remplacés.',
       )
     ) {
       return
@@ -79,11 +79,11 @@ export function TopBar() {
   return (
     <header className="top-bar">
       <div className="top-bar-leading">
-        <h1 className="top-bar-title">Bedroom</h1>
+        <h1 className="top-bar-title">Chambre de Louise</h1>
         <div
           className="mode-toggle"
           role="group"
-          aria-label="Camera mode"
+          aria-label="Mode d’interaction"
         >
           <button
             type="button"
@@ -93,7 +93,7 @@ export function TopBar() {
             aria-pressed={!placing}
             onClick={exitPlace}
           >
-            Orbit
+            Naviguer
           </button>
           <button
             type="button"
@@ -104,11 +104,11 @@ export function TopBar() {
             disabled={!hasPending && !placing}
             title={
               hasPending || placing
-                ? 'Place mode — tap the floor to place'
-                : 'Pick a catalogue item to enter Place mode'
+                ? 'Mode pose — cliquez sur le sol pour placer'
+                : 'Choisissez un meuble dans le catalogue pour poser'
             }
           >
-            Place
+            Poser
           </button>
         </div>
         {hasPending && (
@@ -128,13 +128,13 @@ export function TopBar() {
           </p>
         )}
         <button type="button" className="top-bar-btn" onClick={handleClearRoom}>
-          Clear room
+          Vider
         </button>
         <button type="button" className="top-bar-btn" onClick={handleExport}>
-          Export
+          Exporter
         </button>
         <button type="button" className="top-bar-btn" onClick={handleImportClick}>
-          Import
+          Importer
         </button>
         <input
           ref={fileInputRef}

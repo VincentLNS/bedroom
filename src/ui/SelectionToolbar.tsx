@@ -8,20 +8,20 @@ export function SelectionToolbar() {
   if (!selectedId) return null
 
   return (
-    <div className="selection-toolbar" role="toolbar" aria-label="Selection">
+    <div className="selection-toolbar" role="toolbar" aria-label="Sélection">
       <button
         type="button"
         className="selection-toolbar-btn"
         onClick={() => rotateSelected()}
       >
-        Rotate
+        Tourner
       </button>
       <button
         type="button"
         className="selection-toolbar-btn selection-toolbar-btn--danger"
         onClick={() => deleteSelected()}
       >
-        Delete
+        Supprimer
       </button>
     </div>
   )

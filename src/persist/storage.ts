@@ -40,6 +40,6 @@ export async function readBedroomFile(
     const text = await file.text()
     return parseLayout(JSON.parse(text))
   } catch {
-    return { ok: false, error: 'Could not read bedroom file' }
+    return { ok: false, error: 'Impossible de lire le fichier de chambre' }
   }
 }

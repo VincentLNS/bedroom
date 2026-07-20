@@ -21,14 +21,14 @@ describe('App', () => {
 
   it('renders bedroom title and catalogue chrome', () => {
     render(<App />)
-    expect(screen.getByRole('heading', { name: 'Bedroom' })).toBeTruthy()
-    expect(screen.getByRole('group', { name: 'Camera mode' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Orbit' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Place' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Clear room' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Export' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Import' })).toBeTruthy()
-    expect(screen.getByRole('navigation', { name: 'Furniture categories' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Chambre de Louise' })).toBeTruthy()
+    expect(screen.getByRole('group', { name: 'Mode d’interaction' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Naviguer' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Poser' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Vider' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Exporter' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Importer' })).toBeTruthy()
+    expect(screen.getByRole('navigation', { name: 'Catégories du catalogue' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Lit Louise' })).toBeTruthy()
   })
 
@@ -40,7 +40,7 @@ describe('App', () => {
     expect(state.mode).toBe('place')
   })
 
-  it('clears pending via Orbit toggle, Annuler, and Escape', () => {
+  it('clears pending via Naviguer toggle, Annuler, and Escape', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: 'Lit Louise' }))
     expect(useRoomStore.getState().mode).toBe('place')
@@ -51,7 +51,7 @@ describe('App', () => {
     expect(useRoomStore.getState().mode).toBe('orbit')
 
     fireEvent.click(screen.getByRole('button', { name: 'Lit Louise' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Orbit' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Naviguer' }))
     expect(useRoomStore.getState().pendingCatalogId).toBeNull()
     expect(useRoomStore.getState().mode).toBe('orbit')
 
@@ -79,7 +79,7 @@ describe('App', () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
 
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'Clear room' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Vider' }))
 
     expect(confirmSpy).toHaveBeenCalled()
     const state = useRoomStore.getState()
@@ -105,10 +105,10 @@ describe('App', () => {
       mode: 'edit',
     })
     render(<App />)
-    expect(screen.getByRole('toolbar', { name: 'Selection' })).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Rotate' }))
+    expect(screen.getByRole('toolbar', { name: 'Sélection' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Tourner' }))
     expect(useRoomStore.getState().items[0].rot).toBe(90)
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer' }))
     expect(useRoomStore.getState().items).toHaveLength(0)
     expect(useRoomStore.getState().selectedId).toBeNull()
   })

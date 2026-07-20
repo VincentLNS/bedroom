@@ -12,12 +12,12 @@ const CATEGORIES: CatalogCategory[] = [
 ]
 
 const CATEGORY_LABELS: Record<CatalogCategory, string> = {
-  beds: 'Beds',
-  desks: 'Desks',
-  storage: 'Storage',
-  toys: 'Toys',
-  soft: 'Soft',
-  decor: 'Decor',
+  beds: 'Lits',
+  desks: 'Bureau',
+  storage: 'Rangement',
+  toys: 'Jouets',
+  soft: 'Textile',
+  decor: 'Déco',
 }
 
 function itemTint(item: ReturnType<typeof listByCategory>[number]): string {
@@ -36,7 +36,7 @@ export function CataloguePanel() {
       onPointerDown={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
     >
-      <nav className="catalogue-tabs" aria-label="Furniture categories">
+      <nav className="catalogue-tabs" aria-label="Catégories du catalogue">
         {CATEGORIES.map((cat) => (
           <button
             key={cat}
