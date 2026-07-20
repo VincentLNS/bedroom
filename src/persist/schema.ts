@@ -6,6 +6,8 @@ export type BedroomFileItemV1 = {
   x: number
   z: number
   rot: Rotation
+  /** Optional host instance for surface stacking. */
+  parentId?: string
 }
 
 export type BedroomFileV1 = {
@@ -20,12 +22,13 @@ export function serializeLayout(items: PlacedItem[]): BedroomFileV1 {
   return {
     version: 1,
     roomId: 'girl-bedroom-v1',
-    items: items.map(({ instanceId, catalogId, cx, cz, rot }) => ({
+    items: items.map(({ instanceId, catalogId, cx, cz, rot, parentId }) => ({
       instanceId,
       catalogId,
       x: cx,
       z: cz,
       rot,
+      ...(parentId ? { parentId } : {}),
     })),
   }
 }
@@ -33,13 +36,17 @@ export function serializeLayout(items: PlacedItem[]): BedroomFileV1 {
 function isBedroomFileItemV1(value: unknown): value is BedroomFileItemV1 {
   if (!value || typeof value !== 'object') return false
   const item = value as Record<string, unknown>
-  return (
+  const base =
     typeof item.instanceId === 'string' &&
     typeof item.catalogId === 'string' &&
     typeof item.x === 'number' &&
     typeof item.z === 'number' &&
     VALID_ROTS.has(item.rot as number)
-  )
+  if (!base) return false
+  if (item.parentId !== undefined && typeof item.parentId !== 'string') {
+    return false
+  }
+  return true
 }
 
 export function parseLayout(
@@ -78,11 +85,12 @@ export function parseLayout(
 }
 
 export function fileToPlacedItems(file: BedroomFileV1): PlacedItem[] {
-  return file.items.map(({ instanceId, catalogId, x, z, rot }) => ({
+  return file.items.map(({ instanceId, catalogId, x, z, rot, parentId }) => ({
     instanceId,
     catalogId,
     cx: x,
     cz: z,
     rot,
+    ...(parentId ? { parentId } : {}),
   }))
 }

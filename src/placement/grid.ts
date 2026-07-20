@@ -4,9 +4,21 @@ import {
   GRID_ROWS,
   ROOM_MIN_X,
   ROOM_MIN_Z,
+  WORLD_MAX_CX,
+  WORLD_MAX_CZ,
+  WORLD_MIN_CX,
+  WORLD_MIN_CZ,
 } from '../room/constants'
 
-export { CELL_SIZE, GRID_COLS, GRID_ROWS } from '../room/constants'
+export {
+  CELL_SIZE,
+  GRID_COLS,
+  GRID_ROWS,
+  WORLD_MAX_CX,
+  WORLD_MAX_CZ,
+  WORLD_MIN_CX,
+  WORLD_MIN_CZ,
+} from '../room/constants'
 
 export function worldToCell(x: number, z: number): { cx: number; cz: number } {
   return {
@@ -61,8 +73,23 @@ export function footprintCells(
   }))
 }
 
+/** Inside the bedroom floor grid. */
+export function isRoomCell(cx: number, cz: number): boolean {
+  return cx >= 0 && cx < GRID_COLS && cz >= 0 && cz < GRID_ROWS
+}
+
+/** Bedroom cells only (furniture). */
 export function inBounds(cells: { cx: number; cz: number }[]): boolean {
+  return cells.every((c) => isRoomCell(c.cx, c.cz))
+}
+
+/** Bedroom + garden ring (animals / outdoor props). */
+export function inWorldBounds(cells: { cx: number; cz: number }[]): boolean {
   return cells.every(
-    (c) => c.cx >= 0 && c.cx < GRID_COLS && c.cz >= 0 && c.cz < GRID_ROWS,
+    (c) =>
+      c.cx >= WORLD_MIN_CX &&
+      c.cx < WORLD_MAX_CX &&
+      c.cz >= WORLD_MIN_CZ &&
+      c.cz < WORLD_MAX_CZ,
   )
 }

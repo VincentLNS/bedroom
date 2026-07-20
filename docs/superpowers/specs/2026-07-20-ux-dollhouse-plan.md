@@ -93,11 +93,15 @@ Avant                          Après
 
 ## Critères de succès
 
-- [ ] La pièce ne « flotte » plus (socle + fond atelier visibles)
-- [ ] On place un lit sans être bloqué par un mur opaque
-- [ ] Caméra stable type dollhouse (pas de retournement sous le sol)
-- [ ] Toute l’UI en français
-- [ ] Un enfant / parent comprend Pose → Échap → Tourner en < 30 s
+- [x] La pièce ne « flotte » plus (socle + fond atelier visibles)
+- [x] On place un lit sans être bloqué par un mur opaque
+- [x] Caméra stable type dollhouse (pas de retournement sous le sol)
+- [x] Toute l’UI en français
+- [x] Un enfant / parent comprend Pose → Échap → Tourner en < 30 s
+- [x] Vue Plan top-down (Planner 5D / RoomSketcher)
+- [x] Recentrer caméra + raccourcis clavier
+- [x] Murs face caméra auto-masqués (Sims)
+- [x] Grille toggle + murs segmentés
 
 ## Ordre d’exécution proposé
 

@@ -7,6 +7,12 @@ describe('roomStore', () => {
     useRoomStore.getState().clearPending()
     useRoomStore.getState().select(null)
     useRoomStore.getState().clearImportWarnings()
+    useRoomStore.getState().setCurtainsOpen(true)
+    useRoomStore.getState().setWallMode('cut')
+    useRoomStore.getState().setViewMode('dollhouse')
+    useRoomStore.getState().setShowGrid(true)
+    useRoomStore.getState().setWallsAutoHide(true)
+    useRoomStore.setState({ undoStack: [], redoStack: [], toast: null })
   })
 
   it('places an item when free', () => {
@@ -16,10 +22,32 @@ describe('roomStore', () => {
     expect(useRoomStore.getState().items[0].catalogId).toBe('bed-louise')
   })
 
-  it('rejects overlapping place', () => {
+  it('rejects overlapping floor furniture', () => {
     expect(useRoomStore.getState().place('bed-louise', 2, 3, 0)).toBe(true)
-    expect(useRoomStore.getState().place('stitch-blue', 2, 3, 0)).toBe(false)
+    expect(useRoomStore.getState().place('desk-louise', 2, 3, 0)).toBe(false)
     expect(useRoomStore.getState().items).toHaveLength(1)
+  })
+
+  it('stacks nestable props on a bed surface', () => {
+    expect(useRoomStore.getState().place('bed-louise', 6, 4, 0)).toBe(true)
+    const bedId = useRoomStore.getState().items[0].instanceId
+    expect(useRoomStore.getState().place('stitch-blue', 6, 5, 0)).toBe(true)
+    const stitch = useRoomStore.getState().items.find(
+      (i) => i.catalogId === 'stitch-blue',
+    )
+    expect(stitch?.parentId).toBe(bedId)
+    expect(useRoomStore.getState().place('angel-pink', 6, 5, 0)).toBe(false)
+    expect(useRoomStore.getState().place('angel-pink', 7, 5, 0)).toBe(true)
+  })
+
+  it('deletes stacked children with their host', () => {
+    useRoomStore.getState().place('bed-louise', 6, 4, 0)
+    const bedId = useRoomStore.getState().items[0].instanceId
+    useRoomStore.getState().place('stitch-blue', 6, 5, 0)
+    expect(useRoomStore.getState().items).toHaveLength(2)
+    useRoomStore.getState().select(bedId)
+    useRoomStore.getState().deleteSelected()
+    expect(useRoomStore.getState().items).toHaveLength(0)
   })
 
   it('rotates selected by 90 degrees', () => {
@@ -110,5 +138,81 @@ describe('roomStore', () => {
     expect(state.importWarnings).toEqual([
       'Meuble inconnu ignoré : unknown-sofa',
     ])
+  })
+
+  it('rotatePending cycles placement rotation', () => {
+    useRoomStore.getState().armPlace('bed-louise')
+    expect(useRoomStore.getState().pendingRot).toBe(0)
+    useRoomStore.getState().rotatePending()
+    expect(useRoomStore.getState().pendingRot).toBe(90)
+    useRoomStore.getState().rotatePending()
+    expect(useRoomStore.getState().pendingRot).toBe(180)
+  })
+
+  it('toggles curtains open and closed', () => {
+    useRoomStore.getState().setCurtainsOpen(true)
+    expect(useRoomStore.getState().curtainsOpen).toBe(true)
+    useRoomStore.getState().toggleCurtains()
+    expect(useRoomStore.getState().curtainsOpen).toBe(false)
+    useRoomStore.getState().setCurtainsOpen(true)
+    expect(useRoomStore.getState().curtainsOpen).toBe(true)
+  })
+
+  it('cancelInteraction clears pending, selection, and dragging', () => {
+    useRoomStore.getState().armPlace('bed-louise')
+    useRoomStore.getState().setDragging(true)
+    expect(useRoomStore.getState().mode).toBe('place')
+
+    useRoomStore.getState().cancelInteraction()
+
+    const state = useRoomStore.getState()
+    expect(state.pendingCatalogId).toBeNull()
+    expect(state.selectedId).toBeNull()
+    expect(state.dragging).toBe(false)
+    expect(state.mode).toBe('orbit')
+  })
+
+  it('undo restores previous items after place and delete', () => {
+    expect(useRoomStore.getState().place('lightbox-louise', 5, 5, 0)).toBe(true)
+    expect(useRoomStore.getState().items).toHaveLength(1)
+    const id = useRoomStore.getState().items[0].instanceId
+
+    useRoomStore.getState().select(id)
+    useRoomStore.getState().deleteSelected()
+    expect(useRoomStore.getState().items).toHaveLength(0)
+
+    expect(useRoomStore.getState().undo()).toBe(true)
+    expect(useRoomStore.getState().items).toHaveLength(1)
+    expect(useRoomStore.getState().items[0].catalogId).toBe('lightbox-louise')
+
+    expect(useRoomStore.getState().undo()).toBe(true)
+    expect(useRoomStore.getState().items).toHaveLength(0)
+
+    expect(useRoomStore.getState().redo()).toBe(true)
+    expect(useRoomStore.getState().items).toHaveLength(1)
+  })
+
+  it('duplicates selected into a free neighbour cell', () => {
+    expect(useRoomStore.getState().place('lightbox-louise', 5, 5, 0)).toBe(true)
+    const id = useRoomStore.getState().items[0].instanceId
+    useRoomStore.getState().select(id)
+    expect(useRoomStore.getState().duplicateSelected()).toBe(true)
+    expect(useRoomStore.getState().items).toHaveLength(2)
+  })
+
+  it('locks selected item against delete', () => {
+    expect(useRoomStore.getState().place('lightbox-louise', 5, 5, 0)).toBe(true)
+    const id = useRoomStore.getState().items[0].instanceId
+    useRoomStore.getState().select(id)
+    useRoomStore.getState().toggleLockSelected()
+    expect(useRoomStore.getState().items[0].locked).toBe(true)
+    useRoomStore.getState().deleteSelected()
+    expect(useRoomStore.getState().items).toHaveLength(1)
+  })
+
+  it('completes cat-garden challenge when devon is outdoors', () => {
+    useRoomStore.setState({ challengesDone: [] })
+    expect(useRoomStore.getState().place('cat-devon-rex', -2, 5, 0)).toBe(true)
+    expect(useRoomStore.getState().challengesDone).toContain('cat-garden')
   })
 })

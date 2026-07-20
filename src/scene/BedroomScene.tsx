@@ -1,23 +1,43 @@
 import { Canvas } from '@react-three/fiber'
 import { Room } from '../room/Room'
+import { AtelierStage } from '../room/AtelierStage'
+import { OutdoorScenery } from '../room/OutdoorScenery'
 import { FloorGrid } from '../room/FloorGrid'
+import { WallFadeDriver } from '../room/WallFade'
 import { SceneLights } from '../room/lighting'
 import { GhostPreview } from '../furniture/GhostPreview'
 import { PlacedFurniture } from '../furniture/PlacedFurniture'
+import { SnapPulse } from '../furniture/SnapPulse'
+import { useRoomStore } from '../store/roomStore'
 import { PlacementController } from './PlacementController'
 import { SceneCameraControls } from './SceneCameraControls'
+import { GlCaptureBridge } from './GlCaptureBridge'
 
 export function BedroomScene() {
+  const showGrid = useRoomStore((s) => s.showGrid)
+  const shadowQuality = useRoomStore((s) => s.shadowQuality)
+
   return (
-    <Canvas camera={{ position: [4.5, 5.2, 6.5], fov: 42 }}>
-      <color attach="background" args={['#f7efe8']} />
+    <Canvas
+      shadows={shadowQuality !== 'off'}
+      dpr={shadowQuality === 'off' ? [1, 1.25] : [1, 2]}
+      camera={{ position: [3.6, 3.8, 5.2], fov: 40, near: 0.1, far: 80 }}
+      gl={{ preserveDrawingBuffer: true }}
+    >
+      <color attach="background" args={['#c8e0f0']} />
+      <fog attach="fog" args={['#c8e0f0', 22, 48]} />
       <SceneLights />
+      <AtelierStage />
+      <OutdoorScenery />
+      <WallFadeDriver />
       <Room />
-      <FloorGrid />
+      {showGrid && <FloorGrid />}
       <PlacedFurniture />
       <GhostPreview />
+      <SnapPulse />
       <PlacementController />
       <SceneCameraControls />
+      <GlCaptureBridge />
     </Canvas>
   )
 }

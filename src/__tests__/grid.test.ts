@@ -4,6 +4,7 @@ import {
   cellToWorld,
   footprintCells,
   inBounds,
+  inWorldBounds,
   CELL_SIZE,
   GRID_COLS,
   GRID_ROWS,
@@ -39,5 +40,11 @@ describe('grid', () => {
     expect(inBounds([{ cx: 0, cz: 0 }])).toBe(true)
     expect(inBounds([{ cx: -1, cz: 0 }])).toBe(false)
     expect(inBounds([{ cx: 8, cz: 0 }])).toBe(false)
+  })
+
+  it('inWorldBounds allows the garden ring', () => {
+    expect(inWorldBounds([{ cx: -1, cz: 5 }])).toBe(true)
+    expect(inWorldBounds([{ cx: 8, cz: 5 }])).toBe(true)
+    expect(inWorldBounds([{ cx: -4, cz: 0 }])).toBe(false)
   })
 })

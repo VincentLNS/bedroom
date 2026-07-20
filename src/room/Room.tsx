@@ -1,170 +1,335 @@
-import { DoubleSide } from 'three'
+import { useLayoutEffect, useRef } from 'react'
 import {
+  DoubleSide,
+  type Group,
+  type Mesh,
+  type MeshStandardMaterial,
+} from 'three'
+import { useFrame } from '@react-three/fiber'
+import { Curtains } from './Curtains'
+import { useRoomStore } from '../store/roomStore'
+import { wallFade, type WallSide } from './WallFade'
+import {
+  DOOR_CENTER_X,
+  DOOR_WIDTH_M,
   ROOM_DEPTH_M,
   ROOM_HEIGHT_M,
   ROOM_WIDTH_M,
 } from './constants'
 
 const FLOOR_COLOR = '#e8d9c4'
-const WALL_COLOR = '#f5f2ed'
-const DOOR_WIDTH = 1
+const WALL_COLOR = '#FFFFFF'
+const DOOR_WIDTH = DOOR_WIDTH_M
 const DOOR_HEIGHT = 2.1
 const WINDOW_WIDTH = 1.6
 const WINDOW_HEIGHT = 1.1
 const WALL_THICKNESS = 0.08
-const CURTAIN_COLOR = '#c4878a'
 const LANTERN_COLOR = '#f7f0e4'
+/** Sims-style half-wall height for cutaway dollhouse view. */
+const CUT_WALL_H = 1.15
 
-export function Room() {
+function RoomOutline() {
   const halfW = ROOM_WIDTH_M / 2
   const halfD = ROOM_DEPTH_M / 2
-  const doorSide = (ROOM_WIDTH_M - DOOR_WIDTH) / 2
+  const t = 0.04
+  const h = 0.06
+  return (
+    <group>
+      <mesh position={[0, h / 2, -halfD]}>
+        <boxGeometry args={[ROOM_WIDTH_M + t, h, t]} />
+        <meshStandardMaterial color="#d4c4b0" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, h / 2, halfD]}>
+        <boxGeometry args={[ROOM_WIDTH_M + t, h, t]} />
+        <meshStandardMaterial color="#d4c4b0" roughness={0.9} />
+      </mesh>
+      <mesh position={[-halfW, h / 2, 0]}>
+        <boxGeometry args={[t, h, ROOM_DEPTH_M]} />
+        <meshStandardMaterial color="#d4c4b0" roughness={0.9} />
+      </mesh>
+      <mesh position={[halfW, h / 2, 0]}>
+        <boxGeometry args={[t, h, ROOM_DEPTH_M]} />
+        <meshStandardMaterial color="#d4c4b0" roughness={0.9} />
+      </mesh>
+    </group>
+  )
+}
+
+/** Wall mesh that fades / hides when the camera faces it (Sims pattern). */
+function FadeWall({
+  side,
+  position,
+  args,
+  color = WALL_COLOR,
+}: {
+  side: WallSide
+  position: [number, number, number]
+  args: [number, number, number]
+  color?: string
+}) {
+  const meshRef = useRef<Mesh>(null)
+  const matRef = useRef<MeshStandardMaterial>(null)
+  const last = useRef(1)
+
+  useFrame(() => {
+    const mesh = meshRef.current
+    const mat = matRef.current
+    if (!mesh || !mat) return
+    const opacity = wallFade[side]
+    if (opacity === last.current) return
+    last.current = opacity
+    mat.opacity = Math.max(opacity, 0.001)
+    mat.transparent = opacity < 0.99
+    mat.depthWrite = opacity >= 0.99
+    mesh.visible = opacity > 0.12
+  })
+
+  useLayoutEffect(() => {
+    const mesh = meshRef.current
+    if (!mesh) return
+    // When nearly invisible, skip raycasts so placement hits the floor
+    const original = mesh.raycast.bind(mesh)
+    mesh.raycast = (raycaster, intersects) => {
+      if (wallFade[side] <= 0.12) return
+      original(raycaster, intersects)
+    }
+  }, [side])
+
+  return (
+    <mesh ref={meshRef} position={position} castShadow receiveShadow>
+      <boxGeometry args={args} />
+      <meshStandardMaterial
+        ref={matRef}
+        color={color}
+        roughness={0.92}
+        metalness={0}
+      />
+    </mesh>
+  )
+}
+
+function WindowGlass({
+  windowBottom,
+  wallThickness,
+  maxHeight,
+  side,
+}: {
+  windowBottom: number
+  wallThickness: number
+  maxHeight: number
+  side: WallSide
+}) {
+  const groupRef = useRef<Group>(null)
+  const frameT = 0.05
+  const frameD = 0.06
+  const innerW = WINDOW_WIDTH * 0.9
+  const innerH = Math.min(
+    WINDOW_HEIGHT * 0.88,
+    Math.max(0.1, maxHeight - windowBottom - 0.05),
+  )
+  const tooHigh = windowBottom + WINDOW_HEIGHT / 2 - WINDOW_HEIGHT / 2 > maxHeight
+
+  useFrame(() => {
+    const g = groupRef.current
+    if (!g) return
+    g.visible = !tooHigh && wallFade[side] > 0.12
+  })
+
+  if (tooHigh) return null
+
+  const frameZ = -wallThickness * 0.2
+
+  return (
+    <group ref={groupRef} position={[0, windowBottom + innerH / 2 + 0.02, frameZ]}>
+      <mesh position={[0, innerH / 2 + frameT / 2, 0]}>
+        <boxGeometry args={[innerW + frameT * 2, frameT, frameD]} />
+        <meshStandardMaterial color="#3a322c" roughness={0.7} />
+      </mesh>
+      <mesh position={[0, -(innerH / 2 + frameT / 2), 0]}>
+        <boxGeometry args={[innerW + frameT * 2, frameT, frameD]} />
+        <meshStandardMaterial color="#3a322c" roughness={0.7} />
+      </mesh>
+      <mesh position={[-(innerW / 2 + frameT / 2), 0, 0]}>
+        <boxGeometry args={[frameT, innerH, frameD]} />
+        <meshStandardMaterial color="#3a322c" roughness={0.7} />
+      </mesh>
+      <mesh position={[innerW / 2 + frameT / 2, 0, 0]}>
+        <boxGeometry args={[frameT, innerH, frameD]} />
+        <meshStandardMaterial color="#3a322c" roughness={0.7} />
+      </mesh>
+      <mesh position={[0, 0, -0.01]}>
+        <planeGeometry args={[innerW * 0.98, innerH * 0.98]} />
+        <meshStandardMaterial
+          color="#c8e4f4"
+          transparent
+          opacity={0.22}
+          roughness={0.12}
+          metalness={0.05}
+          depthWrite={false}
+          side={DoubleSide}
+        />
+      </mesh>
+    </group>
+  )
+}
+
+export function Room() {
+  const wallMode = useRoomStore((s) => s.wallMode)
+  const viewMode = useRoomStore((s) => s.viewMode)
+  const halfW = ROOM_WIDTH_M / 2
+  const halfD = ROOM_DEPTH_M / 2
+  const doorLeft = DOOR_CENTER_X - DOOR_WIDTH / 2
+  const doorRight = DOOR_CENTER_X + DOOR_WIDTH / 2
+  const leftDoorWallW = halfW + doorLeft
+  const rightDoorWallW = halfW - doorRight
+  const leftDoorWallX = -halfW + leftDoorWallW / 2
+  const rightDoorWallX = halfW - rightDoorWallW / 2
   const windowSide = (ROOM_WIDTH_M - WINDOW_WIDTH) / 2
   const windowBottom = 0.9
-  const windowTop = ROOM_HEIGHT_M - (windowBottom + WINDOW_HEIGHT)
-  const curtainW = 0.28
-  const curtainH = WINDOW_HEIGHT + 0.35
-  const curtainY = windowBottom + WINDOW_HEIGHT / 2 + 0.05
-  const curtainZ = halfD - WALL_THICKNESS * 1.2
-  const curtainX = WINDOW_WIDTH / 2 + curtainW * 0.35
+
+  const wallH =
+    wallMode === 'full' ? ROOM_HEIGHT_M : wallMode === 'cut' ? CUT_WALL_H : 0
+  const showWalls = wallMode !== 'hidden'
+  const showCurtains = wallMode === 'full'
+  const showLantern = wallMode !== 'hidden' && viewMode !== 'plan'
+  const showWindow =
+    wallMode === 'full' || (wallMode === 'cut' && CUT_WALL_H > windowBottom + 0.15)
 
   return (
     <group>
-      {/* Floor — light wood */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[ROOM_WIDTH_M, ROOM_DEPTH_M]} />
         <meshStandardMaterial color={FLOOR_COLOR} />
       </mesh>
 
-      {/* −X wall */}
-      <mesh position={[-halfW, ROOM_HEIGHT_M / 2, 0]}>
-        <boxGeometry args={[WALL_THICKNESS, ROOM_HEIGHT_M, ROOM_DEPTH_M]} />
-        <meshStandardMaterial color={WALL_COLOR} />
-      </mesh>
+      {wallMode !== 'full' && <RoomOutline />}
 
-      {/* +X wall */}
-      <mesh position={[halfW, ROOM_HEIGHT_M / 2, 0]}>
-        <boxGeometry args={[WALL_THICKNESS, ROOM_HEIGHT_M, ROOM_DEPTH_M]} />
-        <meshStandardMaterial color={WALL_COLOR} />
-      </mesh>
-
-      {/* −Z wall with door opening */}
-      <group position={[0, 0, -halfD]}>
-        <mesh position={[-(DOOR_WIDTH / 2 + doorSide / 2), ROOM_HEIGHT_M / 2, 0]}>
-          <boxGeometry args={[doorSide, ROOM_HEIGHT_M, WALL_THICKNESS]} />
-          <meshStandardMaterial color={WALL_COLOR} />
-        </mesh>
-        <mesh position={[DOOR_WIDTH / 2 + doorSide / 2, ROOM_HEIGHT_M / 2, 0]}>
-          <boxGeometry args={[doorSide, ROOM_HEIGHT_M, WALL_THICKNESS]} />
-          <meshStandardMaterial color={WALL_COLOR} />
-        </mesh>
-        <mesh
-          position={[
-            0,
-            DOOR_HEIGHT + (ROOM_HEIGHT_M - DOOR_HEIGHT) / 2,
-            0,
-          ]}
-        >
-          <boxGeometry
-            args={[DOOR_WIDTH, ROOM_HEIGHT_M - DOOR_HEIGHT, WALL_THICKNESS]}
+      {showWalls && (
+        <>
+          <FadeWall
+            side="negX"
+            position={[-halfW, wallH / 2, 0]}
+            args={[WALL_THICKNESS, wallH, ROOM_DEPTH_M]}
           />
-          <meshStandardMaterial color={WALL_COLOR} />
-        </mesh>
-        <mesh position={[0, DOOR_HEIGHT / 2, WALL_THICKNESS * 0.6]}>
-          <boxGeometry args={[DOOR_WIDTH * 0.92, DOOR_HEIGHT * 0.98, 0.02]} />
-          <meshStandardMaterial color="#c4a090" />
-        </mesh>
-      </group>
-
-      {/* +Z wall with window */}
-      <group position={[0, 0, halfD]}>
-        <mesh position={[-(WINDOW_WIDTH / 2 + windowSide / 2), ROOM_HEIGHT_M / 2, 0]}>
-          <boxGeometry args={[windowSide, ROOM_HEIGHT_M, WALL_THICKNESS]} />
-          <meshStandardMaterial color={WALL_COLOR} />
-        </mesh>
-        <mesh position={[WINDOW_WIDTH / 2 + windowSide / 2, ROOM_HEIGHT_M / 2, 0]}>
-          <boxGeometry args={[windowSide, ROOM_HEIGHT_M, WALL_THICKNESS]} />
-          <meshStandardMaterial color={WALL_COLOR} />
-        </mesh>
-        <mesh position={[0, windowBottom / 2, 0]}>
-          <boxGeometry args={[WINDOW_WIDTH, windowBottom, WALL_THICKNESS]} />
-          <meshStandardMaterial color={WALL_COLOR} />
-        </mesh>
-        <mesh position={[0, ROOM_HEIGHT_M - windowTop / 2, 0]}>
-          <boxGeometry args={[WINDOW_WIDTH, windowTop, WALL_THICKNESS]} />
-          <meshStandardMaterial color={WALL_COLOR} />
-        </mesh>
-        {/* Dark window frame */}
-        <mesh
-          position={[0, windowBottom + WINDOW_HEIGHT / 2, -WALL_THICKNESS * 0.15]}
-        >
-          <boxGeometry
-            args={[WINDOW_WIDTH * 0.98, WINDOW_HEIGHT * 0.98, 0.04]}
+          <FadeWall
+            side="posX"
+            position={[halfW, wallH / 2, 0]}
+            args={[WALL_THICKNESS, wallH, ROOM_DEPTH_M]}
           />
-          <meshStandardMaterial color="#3a322c" />
-        </mesh>
-        {/* Emissive window panel */}
-        <mesh
-          position={[0, windowBottom + WINDOW_HEIGHT / 2, -WALL_THICKNESS * 0.3]}
-        >
-          <planeGeometry args={[WINDOW_WIDTH * 0.86, WINDOW_HEIGHT * 0.84]} />
-          <meshStandardMaterial
-            color="#fff8e7"
-            emissive="#ffe8b0"
-            emissiveIntensity={0.85}
-            side={DoubleSide}
+
+          {/* −Z door wall */}
+          <group position={[0, 0, -halfD]}>
+            <FadeWall
+              side="negZ"
+              position={[leftDoorWallX, wallH / 2, 0]}
+              args={[leftDoorWallW, wallH, WALL_THICKNESS]}
+            />
+            <FadeWall
+              side="negZ"
+              position={[rightDoorWallX, wallH / 2, 0]}
+              args={[rightDoorWallW, wallH, WALL_THICKNESS]}
+            />
+            {wallMode === 'full' && (
+              <FadeWall
+                side="negZ"
+                position={[
+                  DOOR_CENTER_X,
+                  DOOR_HEIGHT + (ROOM_HEIGHT_M - DOOR_HEIGHT) / 2,
+                  0,
+                ]}
+                args={[DOOR_WIDTH, ROOM_HEIGHT_M - DOOR_HEIGHT, WALL_THICKNESS]}
+              />
+            )}
+            <FadeWall
+              side="negZ"
+              position={[
+                DOOR_CENTER_X,
+                Math.min(DOOR_HEIGHT, wallH) / 2,
+                WALL_THICKNESS * 0.6,
+              ]}
+              args={[
+                DOOR_WIDTH * 0.92,
+                Math.min(DOOR_HEIGHT, wallH) * 0.98,
+                0.02,
+              ]}
+              color="#c4a090"
+            />
+          </group>
+
+          {/* +Z window wall */}
+          <group position={[0, 0, halfD]}>
+            <FadeWall
+              side="posZ"
+              position={[-(WINDOW_WIDTH / 2 + windowSide / 2), wallH / 2, 0]}
+              args={[windowSide, wallH, WALL_THICKNESS]}
+            />
+            <FadeWall
+              side="posZ"
+              position={[WINDOW_WIDTH / 2 + windowSide / 2, wallH / 2, 0]}
+              args={[windowSide, wallH, WALL_THICKNESS]}
+            />
+            <FadeWall
+              side="posZ"
+              position={[0, Math.min(windowBottom, wallH) / 2, 0]}
+              args={[
+                WINDOW_WIDTH,
+                Math.min(windowBottom, wallH),
+                WALL_THICKNESS,
+              ]}
+            />
+            {wallMode === 'full' && (
+              <FadeWall
+                side="posZ"
+                position={[
+                  0,
+                  ROOM_HEIGHT_M -
+                    (ROOM_HEIGHT_M - (windowBottom + WINDOW_HEIGHT)) / 2,
+                  0,
+                ]}
+                args={[
+                  WINDOW_WIDTH,
+                  ROOM_HEIGHT_M - (windowBottom + WINDOW_HEIGHT),
+                  WALL_THICKNESS,
+                ]}
+              />
+            )}
+            {showWindow && (
+              <WindowGlass
+                windowBottom={windowBottom}
+                wallThickness={WALL_THICKNESS}
+                maxHeight={wallH}
+                side="posZ"
+              />
+            )}
+          </group>
+        </>
+      )}
+
+      {showCurtains && <Curtains windowBottom={windowBottom} />}
+
+      {showLantern && (
+        <group position={[0, ROOM_HEIGHT_M - 0.45, 0]}>
+          <mesh>
+            <sphereGeometry args={[0.28, 20, 16]} />
+            <meshStandardMaterial
+              color={LANTERN_COLOR}
+              emissive="#ffe8c8"
+              emissiveIntensity={0.35}
+              roughness={0.85}
+            />
+          </mesh>
+          <mesh position={[0, 0.32, 0]}>
+            <cylinderGeometry args={[0.008, 0.008, 0.2, 8]} />
+            <meshStandardMaterial color="#d8c8b0" />
+          </mesh>
+          <pointLight
+            intensity={0.35}
+            color="#ffe8c0"
+            distance={5}
+            decay={2}
           />
-        </mesh>
-      </group>
-
-      {/* Dusty-rose curtains flanking the window (+Z) */}
-      <mesh position={[-curtainX, curtainY, curtainZ]}>
-        <boxGeometry args={[curtainW, curtainH, 0.06]} />
-        <meshStandardMaterial color={CURTAIN_COLOR} roughness={0.9} />
-      </mesh>
-      <mesh position={[curtainX, curtainY, curtainZ]}>
-        <boxGeometry args={[curtainW, curtainH, 0.06]} />
-        <meshStandardMaterial color={CURTAIN_COLOR} roughness={0.9} />
-      </mesh>
-      {/* Curtain rod */}
-      <mesh position={[0, curtainY + curtainH / 2 + 0.04, curtainZ]}>
-        <boxGeometry args={[WINDOW_WIDTH + curtainW * 2.2, 0.03, 0.03]} />
-        <meshStandardMaterial color="#8a7568" metalness={0.3} roughness={0.5} />
-      </mesh>
-
-      {/* Paper lantern — fixed ceiling prop */}
-      <group position={[0, ROOM_HEIGHT_M - 0.45, 0]}>
-        <mesh>
-          <sphereGeometry args={[0.28, 20, 16]} />
-          <meshStandardMaterial
-            color={LANTERN_COLOR}
-            emissive="#ffe8c8"
-            emissiveIntensity={0.35}
-            roughness={0.85}
-          />
-        </mesh>
-        <mesh position={[0, 0.32, 0]}>
-          <cylinderGeometry args={[0.008, 0.008, 0.2, 8]} />
-          <meshStandardMaterial color="#d8c8b0" />
-        </mesh>
-        <pointLight
-          intensity={0.35}
-          color="#ffe8c0"
-          distance={5}
-          decay={2}
-        />
-      </group>
-
-      {/* Very transparent ceiling so top-down orbit stays readable */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, ROOM_HEIGHT_M, 0]}>
-        <planeGeometry args={[ROOM_WIDTH_M, ROOM_DEPTH_M]} />
-        <meshStandardMaterial
-          color="#ffffff"
-          transparent
-          opacity={0.08}
-          depthWrite={false}
-        />
-      </mesh>
+        </group>
+      )}
     </group>
   )
 }

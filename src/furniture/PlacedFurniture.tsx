@@ -1,11 +1,18 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
 import { Mesh, Plane, Vector3, type Group } from 'three'
 import { getCatalogItem } from '../catalog'
-import { canPlace, cellToWorld, footprintCells, worldToCell } from '../placement'
+import {
+  resolvePlacement,
+  surfaceYForItem,
+  worldToCell,
+  cellToWorld,
+  footprintCells,
+} from '../placement'
 import { useRoomStore, type Rotation } from '../store/roomStore'
 import { PrimitiveFurniture } from './PrimitiveFurniture'
+import { CatalogItemMesh } from './CatalogItemMesh'
 
 export function footprintWorldCenter(
   cx: number,
@@ -33,6 +40,8 @@ type DragPreview = {
   cx: number
   cz: number
   valid: boolean
+  y: number
+  parentId?: string
   originCx: number
   originCz: number
 }
@@ -44,7 +53,6 @@ export function PlacedFurniture() {
   const select = useRoomStore((s) => s.select)
   const move = useRoomStore((s) => s.move)
   const setDragging = useRoomStore((s) => s.setDragging)
-  const getOccupied = useRoomStore((s) => s.getOccupied)
   const dragging = useRoomStore((s) => s.dragging)
 
   const groupRef = useRef<Group>(null)
@@ -58,7 +66,6 @@ export function PlacedFurniture() {
   useLayoutEffect(() => {
     const group = groupRef.current
     if (!group) return
-    // Placed meshes must not steal floor clicks while placing.
     group.traverse((obj) => {
       if (!(obj instanceof Mesh)) return
       obj.raycast = mode === 'place' ? () => {} : Mesh.prototype.raycast
@@ -82,19 +89,41 @@ export function PlacedFurniture() {
     if (!hit) return
 
     const { cx, cz } = worldToCell(hitPoint.x, hitPoint.z)
-    const cells = footprintCells(cx, cz, item.rot, catalog.footprint)
-    const valid = canPlace(cells, getOccupied(), item.instanceId)
+    const resolved = resolvePlacement(
+      catalog,
+      cx,
+      cz,
+      item.rot,
+      useRoomStore.getState().items,
+      item.instanceId,
+    )
+    const valid = resolved.ok
+    const y =
+      valid && resolved.parentId
+        ? surfaceYForItem(
+            {
+              ...item,
+              cx,
+              cz,
+              parentId: resolved.parentId,
+            },
+            useRoomStore.getState().items,
+          )
+        : 0
 
     if (
       preview.cx !== cx ||
       preview.cz !== cz ||
-      preview.valid !== valid
+      preview.valid !== valid ||
+      preview.y !== y
     ) {
       const next: DragPreview = {
         ...preview,
         cx,
         cz,
         valid,
+        y,
+        parentId: resolved.ok ? resolved.parentId : undefined,
       }
       dragPreviewRef.current = next
       setDragPreview(next)
@@ -112,6 +141,14 @@ export function PlacedFurniture() {
     }
   }
 
+  // ESC / clearPending sets dragging=false in the store — snap local preview back.
+  useEffect(() => {
+    if (dragging) return
+    if (!dragPreviewRef.current) return
+    dragPreviewRef.current = null
+    setDragPreview(null)
+  }, [dragging])
+
   useLayoutEffect(() => {
     if (!dragging) return
 
@@ -120,7 +157,6 @@ export function PlacedFurniture() {
 
     window.addEventListener('pointerup', onUp)
     window.addEventListener('pointercancel', onCancel)
-    // Prevent orbit from eating the gesture while dragging.
     gl.domElement.style.cursor = 'grabbing'
 
     return () => {
@@ -128,7 +164,6 @@ export function PlacedFurniture() {
       window.removeEventListener('pointercancel', onCancel)
       gl.domElement.style.cursor = ''
     }
-    // endDrag closes over latest move/setDragging via store getters
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dragging, gl, move, setDragging])
 
@@ -147,12 +182,23 @@ export function PlacedFurniture() {
     if (mode === 'place') return
     if (instanceId !== selectedId) return
 
+    const item = items.find((i) => i.instanceId === instanceId)
+    if (item?.locked) {
+      useRoomStore
+        .getState()
+        .flashToast('Verrouillé — appuie sur 🔓 pour bouger', 'info')
+      return
+    }
+
     e.stopPropagation()
+    const y = item ? surfaceYForItem(item, items) : 0
     const next: DragPreview = {
       instanceId,
       cx,
       cz,
       valid: true,
+      y,
+      parentId: item?.parentId,
       originCx: cx,
       originCz: cz,
     }
@@ -161,17 +207,25 @@ export function PlacedFurniture() {
     setDragging(true)
   }
 
+  // Draw floor hosts first, then stacked props (so tops are clickable)
+  const ordered = [...items].sort((a, b) => {
+    const ay = a.parentId ? 1 : 0
+    const by = b.parentId ? 1 : 0
+    return ay - by
+  })
+
   return (
     <group ref={groupRef}>
-      {items.map((item) => {
+      {ordered.map((item) => {
         const catalog = getCatalogItem(item.catalogId)
-        if (!catalog || catalog.visual.type !== 'primitive') return null
+        if (!catalog) return null
 
         const isSelected = item.instanceId === selectedId
         const preview =
           dragPreview?.instanceId === item.instanceId ? dragPreview : null
         const cx = preview?.cx ?? item.cx
         const cz = preview?.cz ?? item.cz
+        const y = preview ? preview.y : surfaceYForItem(item, items)
 
         const { x, z } = footprintWorldCenter(
           cx,
@@ -184,23 +238,18 @@ export function PlacedFurniture() {
         return (
           <group
             key={item.instanceId}
-            position={[x, 0, z]}
+            position={[x, y, z]}
             rotation={[0, yRot, 0]}
             onClick={(e) => onItemClick(e, item.instanceId)}
             onPointerDown={(e) =>
               onItemPointerDown(e, item.instanceId, item.cx, item.cz)
             }
           >
-            <PrimitiveFurniture
-              kind={catalog.visual.kind}
-              footprint={catalog.footprint}
-              tint={
-                preview && !preview.valid
-                  ? '#f08080'
-                  : catalog.visual.tint
-              }
+            <CatalogItemMesh
+              item={catalog}
               opacity={preview ? 0.85 : 1}
               selected={isSelected && !preview}
+              invalid={Boolean(preview && !preview.valid)}
             />
           </group>
         )

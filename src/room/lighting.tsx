@@ -1,29 +1,71 @@
+import { Environment } from '@react-three/drei'
+import { useRoomStore, type ShadowQuality } from '../store/roomStore'
+
 export function SceneLights() {
+  const quality = useRoomStore((s) => s.shadowQuality)
+  const shadowsOn = quality !== 'off'
+  const mapSize = quality === 'high' ? 1024 : 512
+
   return (
     <>
-      <ambientLight intensity={0.55} color="#fff5eb" />
+      {/* Softer ambient so materials (metal/glass/fabric) actually read */}
+      <ambientLight intensity={0.38} color="#fff8f0" />
+      <hemisphereLight args={['#e8f4ff', '#e8d8c8', 0.62]} />
       <directionalLight
-        position={[3, 6, 2]}
-        intensity={0.75}
-        color="#fff8f0"
-        castShadow={false}
+        position={[4.2, 8.5, 3.2]}
+        intensity={1.15}
+        color="#fffef8"
+        castShadow={shadowsOn}
+        shadow-mapSize-width={mapSize}
+        shadow-mapSize-height={mapSize}
+        shadow-camera-far={28}
+        shadow-camera-left={-8}
+        shadow-camera-right={8}
+        shadow-camera-top={8}
+        shadow-camera-bottom={-8}
+        shadow-bias={-0.0002}
       />
-      {/* Soft fill from the window (+Z) */}
       <pointLight
-        position={[0, 1.6, 2.0]}
-        intensity={0.45}
-        color="#ffe8b0"
-        distance={7}
+        position={[0, 1.7, 2.0]}
+        intensity={0.55}
+        color="#ffe4a8"
+        distance={8}
         decay={2}
       />
-      {/* Gentle bounce near door (−Z) */}
-      <pointLight
-        position={[0, 1.8, -1.9]}
-        intensity={0.2}
-        color="#f2d6e4"
-        distance={5}
-        decay={2}
-      />
+      {quality === 'high' && (
+        <>
+          <directionalLight
+            position={[-6, 6, -4]}
+            intensity={0.42}
+            color="#dcecff"
+          />
+          <Environment preset="apartment" environmentIntensity={0.35} />
+        </>
+      )}
+      {quality === 'low' && (
+        <Environment preset="apartment" environmentIntensity={0.22} />
+      )}
+      {quality !== 'off' && (
+        <pointLight
+          position={[-0.5, 1.8, -1.9]}
+          intensity={quality === 'high' ? 0.32 : 0.2}
+          color="#f5f0ea"
+          distance={5}
+          decay={2}
+        />
+      )}
     </>
   )
+}
+
+export function nextShadowQuality(q: ShadowQuality): ShadowQuality {
+  if (q === 'high') return 'low'
+  if (q === 'low') return 'off'
+  return 'high'
+}
+
+export function shadowQualityLabel(q: ShadowQuality): string {
+  if (q === 'high') return 'Ombres ↑'
+  if (q === 'low') return 'Ombres ↓'
+  return 'Ombres off'
 }

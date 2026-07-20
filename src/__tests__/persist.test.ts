@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseLayout, serializeLayout } from '../persist'
+import { fileToPlacedItems, parseLayout, serializeLayout } from '../persist'
 
 describe('persist', () => {
   it('round-trips a layout', () => {
@@ -40,5 +40,31 @@ describe('persist', () => {
   it('rejects non-objects', () => {
     expect(parseLayout(null).ok).toBe(false)
     expect(parseLayout('nope').ok).toBe(false)
+  })
+
+  it('round-trips a layout with parentId', () => {
+    const file = serializeLayout([
+      {
+        instanceId: 'bed',
+        catalogId: 'bed-louise',
+        cx: 6,
+        cz: 4,
+        rot: 0,
+      },
+      {
+        instanceId: 'stitch',
+        catalogId: 'stitch-blue',
+        cx: 6,
+        cz: 5,
+        rot: 0,
+        parentId: 'bed',
+      },
+    ])
+    expect(file.items[1].parentId).toBe('bed')
+    const parsed = parseLayout(file)
+    expect(parsed.ok).toBe(true)
+    if (parsed.ok) {
+      expect(fileToPlacedItems(parsed.file)[1].parentId).toBe('bed')
+    }
   })
 })

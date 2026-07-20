@@ -1,11 +1,24 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   downloadBedroomFile,
   fileToPlacedItems,
   readBedroomFile,
   serializeLayout,
 } from '../persist'
-import { useRoomStore } from '../store/roomStore'
+import { createLouiseLayout } from '../presets/louise'
+import { useRoomStore, type WallMode } from '../store/roomStore'
+import { CoachTip } from './CoachTip'
+import { useCoarsePointer } from './useCoarsePointer'
+import {
+  nextShadowQuality,
+  shadowQualityLabel,
+} from '../room/lighting'
+
+const WALL_OPTIONS: { mode: WallMode; label: string }[] = [
+  { mode: 'cut', label: 'Coupés' },
+  { mode: 'hidden', label: 'Sans' },
+  { mode: 'full', label: 'Complets' },
+]
 
 export function TopBar() {
   const clearRoom = useRoomStore((s) => s.clearRoom)
@@ -17,36 +30,128 @@ export function TopBar() {
   const importWarnings = useRoomStore((s) => s.importWarnings)
   const mode = useRoomStore((s) => s.mode)
   const pendingCatalogId = useRoomStore((s) => s.pendingCatalogId)
+  const curtainsOpen = useRoomStore((s) => s.curtainsOpen)
+  const toggleCurtains = useRoomStore((s) => s.toggleCurtains)
+  const wallMode = useRoomStore((s) => s.wallMode)
+  const setWallMode = useRoomStore((s) => s.setWallMode)
+  const viewMode = useRoomStore((s) => s.viewMode)
+  const setViewMode = useRoomStore((s) => s.setViewMode)
+  const showGrid = useRoomStore((s) => s.showGrid)
+  const toggleShowGrid = useRoomStore((s) => s.toggleShowGrid)
+  const requestCameraHome = useRoomStore((s) => s.requestCameraHome)
+  const canUndo = useRoomStore((s) => s.undoStack.length > 0)
+  const undo = useRoomStore((s) => s.undo)
+  const setPhotoMode = useRoomStore((s) => s.setPhotoMode)
+  const photoMode = useRoomStore((s) => s.photoMode)
+  const shadowQuality = useRoomStore((s) => s.shadowQuality)
+  const setShadowQuality = useRoomStore((s) => s.setShadowQuality)
+  const bigFingers = useRoomStore((s) => s.bigFingers)
+  const setBigFingers = useRoomStore((s) => s.setBigFingers)
+  const highContrast = useRoomStore((s) => s.highContrast)
+  const setHighContrast = useRoomStore((s) => s.setHighContrast)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const coarse = useCoarsePointer()
+  const [moreOpen, setMoreOpen] = useState(false)
+
+  if (photoMode) return null
 
   const placing = mode === 'place'
   const hasPending = pendingCatalogId != null
 
   const exitPlace = () => {
-    clearPending()
-    select(null)
+    useRoomStore.getState().cancelInteraction()
   }
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return
+      const target = event.target as HTMLElement | null
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return
+      }
+
       const store = useRoomStore.getState()
-      store.clearPending()
-      store.select(null)
+
+      // Escape is handled globally in App (capture) — avoid double-handling here.
+      if (event.key === 'Escape' || event.code === 'Escape') return
+
+      if ((event.key === 'z' || event.key === 'Z') && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        if (event.shiftKey) store.redo()
+        else store.undo()
+        return
+      }
+
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        if (store.selectedId) {
+          event.preventDefault()
+          store.deleteSelected()
+        }
+        return
+      }
+
+      if (event.key === 'r' || event.key === 'R') {
+        if (store.pendingCatalogId != null || store.mode === 'place') {
+          event.preventDefault()
+          store.rotatePending()
+          return
+        }
+        if (store.selectedId) {
+          event.preventDefault()
+          store.rotateSelected()
+        }
+        return
+      }
+
+      if (event.key === 'g' || event.key === 'G') {
+        event.preventDefault()
+        store.toggleShowGrid()
+        return
+      }
+
+      if (event.key === 'h' || event.key === 'H') {
+        event.preventDefault()
+        store.requestCameraHome()
+      }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
-  const handleClearRoom = () => {
-    if (window.confirm('Vider toute la chambre ?')) {
+  const handleEmptyPreset = () => {
+    if (
+      window.confirm(
+        'On vide toute la chambre pour recommencer ? Tes meubles actuels disparaîtront.',
+      )
+    ) {
       clearRoom()
       clearPending()
+      select(null)
+      setMoreOpen(false)
+    }
+  }
+
+  const handleLouisePreset = () => {
+    if (
+      window.confirm(
+        'On charge le modèle « Chambre de Louise » ? Tes meubles actuels seront remplacés.',
+      )
+    ) {
+      clearImportWarnings()
+      replaceLayout(createLouiseLayout())
+      clearPending()
+      select(null)
+      setMoreOpen(false)
     }
   }
 
   const handleExport = () => {
     downloadBedroomFile(serializeLayout(items))
+    setMoreOpen(false)
   }
 
   const handleImportClick = () => {
@@ -66,7 +171,7 @@ export function TopBar() {
 
     if (
       !window.confirm(
-        'Importer ce plan ? Les meubles actuels seront remplacés.',
+        'Ouvrir ce plan de chambre ? Tes meubles actuels seront remplacés.',
       )
     ) {
       return
@@ -74,76 +179,272 @@ export function TopBar() {
 
     clearImportWarnings()
     replaceLayout(fileToPlacedItems(result.file))
+    setMoreOpen(false)
   }
 
+  const wallAndViewTools = (
+    <>
+      <div className="mode-toggle" role="group" aria-label="Murs">
+        {WALL_OPTIONS.map(({ mode: m, label }) => (
+          <button
+            key={m}
+            type="button"
+            className={
+              wallMode === m
+                ? 'mode-toggle-btn mode-toggle-btn--active'
+                : 'mode-toggle-btn'
+            }
+            aria-pressed={wallMode === m}
+            onClick={() => setWallMode(m)}
+            title="Murs coupés, masqués ou complets — comme dans les jeux de déco"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <button
+        type="button"
+        className="top-bar-btn"
+        onClick={() => toggleCurtains()}
+        aria-pressed={curtainsOpen}
+        title="Ouvre ou ferme les rideaux"
+        disabled={wallMode !== 'full'}
+      >
+        {curtainsOpen ? 'Rideaux ouverts' : 'Rideaux fermés'}
+      </button>
+      <button
+        type="button"
+        className={
+          showGrid ? 'top-bar-btn top-bar-btn--primary' : 'top-bar-btn'
+        }
+        onClick={() => toggleShowGrid()}
+        aria-pressed={showGrid}
+        title="Afficher ou cacher la grille (G)"
+      >
+        Grille
+      </button>
+    </>
+  )
+
+  const comfortTools = (
+    <>
+      <button
+        type="button"
+        className="top-bar-btn"
+        onClick={() => setShadowQuality(nextShadowQuality(shadowQuality))}
+        title="Qualité des ombres (perf tablette)"
+      >
+        {shadowQualityLabel(shadowQuality)}
+      </button>
+      <button
+        type="button"
+        className={bigFingers ? 'top-bar-btn top-bar-btn--primary' : 'top-bar-btn'}
+        onClick={() => setBigFingers(!bigFingers)}
+        aria-pressed={bigFingers}
+        title="Gros doigts — boutons plus grands"
+      >
+        Gros doigts
+      </button>
+      <button
+        type="button"
+        className={
+          highContrast ? 'top-bar-btn top-bar-btn--primary' : 'top-bar-btn'
+        }
+        onClick={() => setHighContrast(!highContrast)}
+        aria-pressed={highContrast}
+        title="Contraste fort"
+      >
+        Contraste
+      </button>
+    </>
+  )
+
+  const fileTools = (
+    <>
+      <button type="button" className="top-bar-btn" onClick={handleEmptyPreset}>
+        Chambre vide
+      </button>
+      <button type="button" className="top-bar-btn" onClick={handleExport}>
+        Sauver
+      </button>
+      <button type="button" className="top-bar-btn" onClick={handleImportClick}>
+        Ouvrir
+      </button>
+    </>
+  )
+
   return (
-    <header className="top-bar">
-      <div className="top-bar-leading">
-        <h1 className="top-bar-title">Chambre de Louise</h1>
-        <div
-          className="mode-toggle"
-          role="group"
-          aria-label="Mode d’interaction"
-        >
+    <header className={coarse ? 'top-bar top-bar--tablet' : 'top-bar'}>
+      <div className="top-bar-row">
+        <div className="top-bar-leading">
+          <div className="brand-block">
+            <div className="brand-mark">
+              <span className="brand-badge" aria-hidden />
+              <h1 className="top-bar-title">Mini Déco</h1>
+            </div>
+            {!coarse && (
+              <p className="top-bar-tagline">
+                Apprends à décorer · Chambre de Louise
+              </p>
+            )}
+          </div>
+          <div
+            className="mode-toggle"
+            role="group"
+            aria-label="Mode d’interaction"
+          >
+            <button
+              type="button"
+              className={
+                !placing
+                  ? 'mode-toggle-btn mode-toggle-btn--active'
+                  : 'mode-toggle-btn'
+              }
+              aria-pressed={!placing}
+              onClick={exitPlace}
+            >
+              Regarder
+            </button>
+            <button
+              type="button"
+              className={
+                placing
+                  ? 'mode-toggle-btn mode-toggle-btn--active'
+                  : 'mode-toggle-btn'
+              }
+              aria-pressed={placing}
+              disabled={!hasPending && !placing}
+              title={
+                hasPending || placing
+                  ? 'Mode placer — un doigt pose · deux doigts = caméra · Tourner dans le dock'
+                  : 'Choisis d’abord un meuble dans la boîte'
+              }
+            >
+              Placer
+            </button>
+          </div>
+          <div className="mode-toggle" role="group" aria-label="Vue">
+            <button
+              type="button"
+              className={
+                viewMode === 'dollhouse'
+                  ? 'mode-toggle-btn mode-toggle-btn--active'
+                  : 'mode-toggle-btn'
+              }
+              aria-pressed={viewMode === 'dollhouse'}
+              onClick={() => setViewMode('dollhouse')}
+              title="Vue maison de poupée (¾)"
+            >
+              3D
+            </button>
+            <button
+              type="button"
+              className={
+                viewMode === 'plan'
+                  ? 'mode-toggle-btn mode-toggle-btn--active'
+                  : 'mode-toggle-btn'
+              }
+              aria-pressed={viewMode === 'plan'}
+              onClick={() => setViewMode('plan')}
+              title="Vue plan depuis le dessus"
+            >
+              Plan
+            </button>
+          </div>
+          {hasPending && (
+            <button
+              type="button"
+              className="top-bar-btn top-bar-btn--cancel"
+              onClick={() => useRoomStore.getState().cancelInteraction()}
+              title="Lâcher l’objet"
+            >
+              Annuler
+            </button>
+          )}
           <button
             type="button"
-            className={
-              !placing ? 'mode-toggle-btn mode-toggle-btn--active' : 'mode-toggle-btn'
-            }
-            aria-pressed={!placing}
-            onClick={exitPlace}
+            className="top-bar-btn"
+            onClick={() => undo()}
+            disabled={!canUndo}
+            title="Annuler le dernier geste (⌘Z)"
           >
-            Naviguer
+            ↩ Undo
           </button>
           <button
             type="button"
-            className={
-              placing ? 'mode-toggle-btn mode-toggle-btn--active' : 'mode-toggle-btn'
-            }
-            aria-pressed={placing}
-            disabled={!hasPending && !placing}
-            title={
-              hasPending || placing
-                ? 'Mode pose — clic gauche pour poser · clic droit ou Échap pour annuler · clic droit maintenu pour tourner la vue'
-                : 'Choisissez un meuble dans le catalogue pour poser'
-            }
+            className="top-bar-btn"
+            onClick={() => requestCameraHome()}
+            title="Recentrer la caméra (H)"
           >
-            Poser
+            Recentrer
           </button>
+          <button
+            type="button"
+            className="top-bar-btn top-bar-btn--primary"
+            onClick={() => setPhotoMode(true)}
+            title="Mode photo"
+          >
+            Photo
+          </button>
+          {!coarse && wallAndViewTools}
         </div>
-        {hasPending && (
+        <div className="top-bar-actions">
+          {importWarnings.length > 0 && (
+            <p className="top-bar-warning" role="status">
+              {importWarnings.join(' · ')}
+            </p>
+          )}
           <button
             type="button"
-            className="top-bar-btn top-bar-btn--cancel"
-            onClick={() => clearPending()}
+            className="top-bar-btn top-bar-btn--primary"
+            onClick={handleLouisePreset}
           >
-            Annuler
+            Modèle Louise
           </button>
-        )}
+          {coarse ? (
+            <div className="top-bar-more">
+              <button
+                type="button"
+                className={
+                  moreOpen
+                    ? 'top-bar-btn top-bar-btn--primary'
+                    : 'top-bar-btn'
+                }
+                aria-expanded={moreOpen}
+                aria-controls="top-bar-more-panel"
+                onClick={() => setMoreOpen((o) => !o)}
+              >
+                Plus…
+              </button>
+              {moreOpen && (
+                <div
+                  id="top-bar-more-panel"
+                  className="top-bar-more-panel"
+                  role="group"
+                  aria-label="Plus d’options"
+                >
+                  {wallAndViewTools}
+                  {comfortTools}
+                  {fileTools}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {comfortTools}
+              {fileTools}
+            </>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,.bedroom.json,application/json"
+            hidden
+            onChange={handleImportFile}
+          />
+        </div>
       </div>
-      <div className="top-bar-actions">
-        {importWarnings.length > 0 && (
-          <p className="top-bar-warning" role="status">
-            {importWarnings.join(' · ')}
-          </p>
-        )}
-        <button type="button" className="top-bar-btn" onClick={handleClearRoom}>
-          Vider
-        </button>
-        <button type="button" className="top-bar-btn" onClick={handleExport}>
-          Exporter
-        </button>
-        <button type="button" className="top-bar-btn" onClick={handleImportClick}>
-          Importer
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json,.bedroom.json,application/json"
-          hidden
-          onChange={handleImportFile}
-        />
-      </div>
+      <CoachTip />
     </header>
   )
 }

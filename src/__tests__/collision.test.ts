@@ -29,4 +29,13 @@ describe('canPlace', () => {
   it('rejects out of bounds', () => {
     expect(canPlace([{ cx: -1, cz: 0 }], [])).toBe(false)
   })
+
+  it('allows garden cells when allowGarden is set', () => {
+    expect(canPlace([{ cx: -1, cz: 5 }], [], undefined, { allowGarden: true })).toBe(
+      true,
+    )
+    expect(canPlace([{ cx: 8, cz: 5 }], [], undefined, { allowGarden: true })).toBe(
+      true,
+    )
+  })
 })

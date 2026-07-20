@@ -29,13 +29,21 @@ const CATEGORIES: CatalogCategory[] = [
   'toys',
   'soft',
   'decor',
+  'animals',
 ]
 
 describe('catalog', () => {
-  it('has at least 12 items with unique ids', () => {
-    expect(CATALOG.length).toBeGreaterThanOrEqual(12)
+  it('has at least 130 items with unique ids', () => {
+    expect(CATALOG.length).toBeGreaterThanOrEqual(130)
     const ids = CATALOG.map((i) => i.id)
     expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('includes stylish wave items', () => {
+    expect(getCatalogItem('sofa-blush')).toBeDefined()
+    expect(getCatalogItem('vanity-pink')).toBeDefined()
+    expect(getCatalogItem('garden-swing')?.outdoor).toBe(true)
+    expect(getCatalogItem('mushroom-lamp')?.nestable).toBe(true)
   })
 
   it('includes Louise hero set', () => {
@@ -52,6 +60,14 @@ describe('catalog', () => {
     ).toBe(true)
   })
 
+  it('includes animals with outdoor garden placement', () => {
+    const devon = getCatalogItem('cat-devon-rex')
+    expect(devon).toBeDefined()
+    expect(devon?.outdoor).toBe(true)
+    expect(devon?.category).toBe('animals')
+    expect(listByCategory('animals').length).toBeGreaterThanOrEqual(5)
+  })
+
   it('getCatalogItem returns item by id', () => {
     const first = CATALOG[0]
     expect(getCatalogItem(first.id)).toEqual(first)
@@ -66,7 +82,7 @@ describe('catalog', () => {
     }
   })
 
-  it('every item has positive integer footprint fitting 6×9', () => {
+  it('every item has positive integer footprint fitting the room grid', () => {
     for (const item of CATALOG) {
       expect(Number.isInteger(item.footprint[0])).toBe(true)
       expect(Number.isInteger(item.footprint[1])).toBe(true)
@@ -74,6 +90,15 @@ describe('catalog', () => {
       expect(item.footprint[1]).toBeGreaterThan(0)
       expect(item.footprint[0]).toBeLessThanOrEqual(GRID_COLS)
       expect(item.footprint[1]).toBeLessThanOrEqual(GRID_ROWS)
+      expect(item.visual.type === 'primitive' || item.visual.type === 'kenney').toBe(
+        true,
+      )
+      if (item.visual.type === 'primitive') {
+        expect(item.visual.kind).toBeTruthy()
+      }
+      if (item.visual.type === 'kenney') {
+        expect(item.visual.model).toBeTruthy()
+      }
     }
   })
 })
