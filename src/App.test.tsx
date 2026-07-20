@@ -22,6 +22,9 @@ describe('App', () => {
   it('renders bedroom title and catalogue chrome', () => {
     render(<App />)
     expect(screen.getByRole('heading', { name: 'Bedroom' })).toBeTruthy()
+    expect(screen.getByRole('group', { name: 'Camera mode' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Orbit' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Place' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Clear room' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Export' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Import' })).toBeTruthy()
@@ -35,6 +38,27 @@ describe('App', () => {
     const state = useRoomStore.getState()
     expect(state.pendingCatalogId).toBe('bed-twin')
     expect(state.mode).toBe('place')
+  })
+
+  it('clears pending via Orbit toggle, Annuler, and Escape', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Twin Bed' }))
+    expect(useRoomStore.getState().mode).toBe('place')
+    expect(screen.getByRole('button', { name: 'Annuler' })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }))
+    expect(useRoomStore.getState().pendingCatalogId).toBeNull()
+    expect(useRoomStore.getState().mode).toBe('orbit')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Twin Bed' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Orbit' }))
+    expect(useRoomStore.getState().pendingCatalogId).toBeNull()
+    expect(useRoomStore.getState().mode).toBe('orbit')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Twin Bed' }))
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(useRoomStore.getState().pendingCatalogId).toBeNull()
+    expect(useRoomStore.getState().mode).toBe('orbit')
   })
 
   it('clears room after confirm', () => {

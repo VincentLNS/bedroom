@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   downloadBedroomFile,
   fileToPlacedItems,
@@ -10,11 +10,33 @@ import { useRoomStore } from '../store/roomStore'
 export function TopBar() {
   const clearRoom = useRoomStore((s) => s.clearRoom)
   const clearPending = useRoomStore((s) => s.clearPending)
+  const select = useRoomStore((s) => s.select)
   const replaceLayout = useRoomStore((s) => s.replaceLayout)
   const clearImportWarnings = useRoomStore((s) => s.clearImportWarnings)
   const items = useRoomStore((s) => s.items)
   const importWarnings = useRoomStore((s) => s.importWarnings)
+  const mode = useRoomStore((s) => s.mode)
+  const pendingCatalogId = useRoomStore((s) => s.pendingCatalogId)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const placing = mode === 'place'
+  const hasPending = pendingCatalogId != null
+
+  const exitPlace = () => {
+    clearPending()
+    select(null)
+  }
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      const store = useRoomStore.getState()
+      store.clearPending()
+      store.select(null)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   const handleClearRoom = () => {
     if (window.confirm('Clear all furniture from the room?')) {
@@ -56,7 +78,49 @@ export function TopBar() {
 
   return (
     <header className="top-bar">
-      <h1 className="top-bar-title">Bedroom</h1>
+      <div className="top-bar-leading">
+        <h1 className="top-bar-title">Bedroom</h1>
+        <div
+          className="mode-toggle"
+          role="group"
+          aria-label="Camera mode"
+        >
+          <button
+            type="button"
+            className={
+              !placing ? 'mode-toggle-btn mode-toggle-btn--active' : 'mode-toggle-btn'
+            }
+            aria-pressed={!placing}
+            onClick={exitPlace}
+          >
+            Orbit
+          </button>
+          <button
+            type="button"
+            className={
+              placing ? 'mode-toggle-btn mode-toggle-btn--active' : 'mode-toggle-btn'
+            }
+            aria-pressed={placing}
+            disabled={!hasPending && !placing}
+            title={
+              hasPending || placing
+                ? 'Place mode — tap the floor to place'
+                : 'Pick a catalogue item to enter Place mode'
+            }
+          >
+            Place
+          </button>
+        </div>
+        {hasPending && (
+          <button
+            type="button"
+            className="top-bar-btn top-bar-btn--cancel"
+            onClick={() => clearPending()}
+          >
+            Annuler
+          </button>
+        )}
+      </div>
       <div className="top-bar-actions">
         {importWarnings.length > 0 && (
           <p className="top-bar-warning" role="status">
