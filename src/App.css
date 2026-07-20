@@ -21,6 +21,23 @@
   letter-spacing: 0.02em;
 }
 
+/* DEBUG: remove with Task 8 catalogue */
+.debug-arm-place {
+  margin-left: auto;
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px dashed rgba(44, 42, 40, 0.35);
+  border-radius: 4px;
+  background: #fff8e8;
+  color: #5a5048;
+  cursor: pointer;
+}
+
+.debug-arm-place:hover {
+  background: #fff0d0;
+}
+
 .scene-host {
   flex: 1 1 auto;
   min-height: 0;
