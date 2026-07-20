@@ -92,11 +92,12 @@ React shell
 
 ## 7. Room
 
-- Approximate size: **4 × 5 m** (adjustable constant)
-- Soft pastel walls, cream/wood floor
-- Door on one wall; window on the opposite wall (daylight)
-- Orbit-friendly framing; optional translucent/open ceiling so the room is readable from above
-- No wallpaper or paint picker in v1
+- Size: **3.0 × 4.5 m** (narrow × long; door→window on long axis) — see Louise amendment
+- Soft off-white walls, light wood floor
+- Door on one short wall (−Z); window on the opposite short wall (+Z) with dusty-rose curtains
+- Fixed paper lantern on ceiling; orbit-friendly framing; optional translucent ceiling
+- No wallpaper or paint picker in v1 (Louise wall art may be baked into room/preset)
+- **Amendment:** `docs/superpowers/specs/2026-07-20-louise-room-amendment.md` (preset **Chambre Louise** + empty mode)
 
 ## 8. Catalogue
 
