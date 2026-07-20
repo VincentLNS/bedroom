@@ -7,3 +7,4 @@ export {
   footprintCells,
   inBounds,
 } from './grid'
+export { canPlace, type Cell, type PlacedFootprint } from './collision'
