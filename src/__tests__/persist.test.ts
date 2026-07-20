@@ -6,7 +6,7 @@ describe('persist', () => {
     const file = serializeLayout([
       {
         instanceId: 'a',
-        catalogId: 'bed-twin',
+        catalogId: 'bed-louise',
         cx: 2,
         cz: 3,
         rot: 90,
@@ -16,7 +16,7 @@ describe('persist', () => {
     expect(file.roomId).toBe('girl-bedroom-v1')
     expect(file.items[0]).toEqual({
       instanceId: 'a',
-      catalogId: 'bed-twin',
+      catalogId: 'bed-louise',
       x: 2,
       z: 3,
       rot: 90,

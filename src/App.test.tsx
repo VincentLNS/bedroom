@@ -29,20 +29,20 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Export' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Import' })).toBeTruthy()
     expect(screen.getByRole('navigation', { name: 'Furniture categories' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Twin Bed' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Lit Louise' })).toBeTruthy()
   })
 
   it('arms place mode when a catalogue card is clicked', () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'Twin Bed' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Lit Louise' }))
     const state = useRoomStore.getState()
-    expect(state.pendingCatalogId).toBe('bed-twin')
+    expect(state.pendingCatalogId).toBe('bed-louise')
     expect(state.mode).toBe('place')
   })
 
   it('clears pending via Orbit toggle, Annuler, and Escape', () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'Twin Bed' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Lit Louise' }))
     expect(useRoomStore.getState().mode).toBe('place')
     expect(screen.getByRole('button', { name: 'Annuler' })).toBeTruthy()
 
@@ -50,12 +50,12 @@ describe('App', () => {
     expect(useRoomStore.getState().pendingCatalogId).toBeNull()
     expect(useRoomStore.getState().mode).toBe('orbit')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Twin Bed' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Lit Louise' }))
     fireEvent.click(screen.getByRole('button', { name: 'Orbit' }))
     expect(useRoomStore.getState().pendingCatalogId).toBeNull()
     expect(useRoomStore.getState().mode).toBe('orbit')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Twin Bed' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Lit Louise' }))
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(useRoomStore.getState().pendingCatalogId).toBeNull()
     expect(useRoomStore.getState().mode).toBe('orbit')
@@ -66,13 +66,13 @@ describe('App', () => {
       items: [
         {
           instanceId: 'a',
-          catalogId: 'bed-twin',
+          catalogId: 'bed-louise',
           cx: 1,
           cz: 1,
           rot: 0,
         },
       ],
-      pendingCatalogId: 'bed-twin',
+      pendingCatalogId: 'bed-louise',
       mode: 'place',
       selectedId: 'a',
     })
@@ -95,7 +95,7 @@ describe('App', () => {
       items: [
         {
           instanceId: 'a',
-          catalogId: 'plant-pot',
+          catalogId: 'lightbox-louise',
           cx: 5,
           cz: 5,
           rot: 0,

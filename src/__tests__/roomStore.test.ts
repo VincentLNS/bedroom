@@ -10,20 +10,20 @@ describe('roomStore', () => {
   })
 
   it('places an item when free', () => {
-    const ok = useRoomStore.getState().place('bed-twin', 2, 3, 0)
+    const ok = useRoomStore.getState().place('bed-louise', 2, 3, 0)
     expect(ok).toBe(true)
     expect(useRoomStore.getState().items).toHaveLength(1)
-    expect(useRoomStore.getState().items[0].catalogId).toBe('bed-twin')
+    expect(useRoomStore.getState().items[0].catalogId).toBe('bed-louise')
   })
 
   it('rejects overlapping place', () => {
-    expect(useRoomStore.getState().place('bed-twin', 2, 3, 0)).toBe(true)
+    expect(useRoomStore.getState().place('bed-louise', 2, 3, 0)).toBe(true)
     expect(useRoomStore.getState().place('rug-round', 2, 3, 0)).toBe(false)
     expect(useRoomStore.getState().items).toHaveLength(1)
   })
 
   it('rotates selected by 90 degrees', () => {
-    useRoomStore.getState().place('chair-study', 5, 5, 0)
+    useRoomStore.getState().place('chair-swivel-white', 5, 5, 0)
     const id = useRoomStore.getState().items[0].instanceId
     useRoomStore.getState().select(id)
     expect(useRoomStore.getState().rotateSelected()).toBe(true)
@@ -31,7 +31,7 @@ describe('roomStore', () => {
   })
 
   it('deletes selected', () => {
-    useRoomStore.getState().place('plant-pot', 5, 5, 0)
+    useRoomStore.getState().place('lightbox-louise', 5, 5, 0)
     const id = useRoomStore.getState().items[0].instanceId
     useRoomStore.getState().select(id)
     useRoomStore.getState().deleteSelected()
@@ -40,20 +40,20 @@ describe('roomStore', () => {
   })
 
   it('moves selected ignoring self collision', () => {
-    useRoomStore.getState().place('plant-pot', 5, 5, 0)
+    useRoomStore.getState().place('lightbox-louise', 5, 5, 0)
     const id = useRoomStore.getState().items[0].instanceId
     expect(useRoomStore.getState().move(id, 4, 5)).toBe(true)
     expect(useRoomStore.getState().items[0].cx).toBe(4)
   })
 
   it('clearRoom empties items', () => {
-    useRoomStore.getState().place('plant-pot', 5, 5, 0)
+    useRoomStore.getState().place('lightbox-louise', 5, 5, 0)
     useRoomStore.getState().clearRoom()
     expect(useRoomStore.getState().items).toHaveLength(0)
   })
 
   it('clearRoom also clears selectedId', () => {
-    useRoomStore.getState().place('plant-pot', 5, 5, 0)
+    useRoomStore.getState().place('lightbox-louise', 5, 5, 0)
     const id = useRoomStore.getState().items[0].instanceId
     useRoomStore.getState().select(id)
     expect(useRoomStore.getState().selectedId).toBe(id)
@@ -77,8 +77,8 @@ describe('roomStore', () => {
   })
 
   it('select enters edit mode and clears pending', () => {
-    useRoomStore.getState().armPlace('bed-twin')
-    useRoomStore.getState().place('plant-pot', 5, 5, 0)
+    useRoomStore.getState().armPlace('bed-louise')
+    useRoomStore.getState().place('lightbox-louise', 5, 5, 0)
     const id = useRoomStore.getState().items[0].instanceId
     useRoomStore.getState().select(id)
     const state = useRoomStore.getState()
@@ -91,7 +91,7 @@ describe('roomStore', () => {
     useRoomStore.getState().replaceLayout([
       {
         instanceId: 'a',
-        catalogId: 'bed-twin',
+        catalogId: 'bed-louise',
         cx: 2,
         cz: 3,
         rot: 0,
@@ -106,7 +106,7 @@ describe('roomStore', () => {
     ])
     const state = useRoomStore.getState()
     expect(state.items).toHaveLength(1)
-    expect(state.items[0].catalogId).toBe('bed-twin')
+    expect(state.items[0].catalogId).toBe('bed-louise')
     expect(state.importWarnings).toEqual([
       'Skipped unknown furniture: unknown-sofa',
     ])
