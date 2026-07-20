@@ -18,7 +18,7 @@ describe('roomStore', () => {
 
   it('rejects overlapping place', () => {
     expect(useRoomStore.getState().place('bed-louise', 2, 3, 0)).toBe(true)
-    expect(useRoomStore.getState().place('rug-round', 2, 3, 0)).toBe(false)
+    expect(useRoomStore.getState().place('stitch-blue', 2, 3, 0)).toBe(false)
     expect(useRoomStore.getState().items).toHaveLength(1)
   })
 

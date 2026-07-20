@@ -729,8 +729,10 @@ export function PrimitiveFurniture({
     }
     case 'basket': {
       const r = Math.min(w, d) * 0.35
+      const ovalScale: [number, number, number] =
+        w > d ? [w / d, 1, 1] : d > w ? [1, 1, d / w] : [1, 1, 1]
       return (
-        <group>
+        <group scale={ovalScale}>
           <mesh position={[0, 0.18, 0]} castShadow>
             <cylinderGeometry args={[r * 0.95, r * 0.75, 0.32, 16]} />
             <Mat color={tint} {...m} />

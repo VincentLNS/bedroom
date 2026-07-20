@@ -15,6 +15,7 @@ const HERO_IDS = [
   'dollhouse-white-grey',
   'rug-hopscotch-pink',
   'basket-wicker-pompom',
+  'basket-oval-pink',
   'chair-rattan-child',
   'stitch-blue',
   'angel-pink',

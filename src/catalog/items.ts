@@ -87,6 +87,13 @@ export const CATALOG: CatalogItem[] = [
     visual: { type: 'primitive', kind: 'basket', tint: '#B8956A' },
   },
   {
+    id: 'basket-oval-pink',
+    name: 'Panier oval rose',
+    category: 'storage',
+    footprint: [2, 1],
+    visual: { type: 'primitive', kind: 'basket', tint: '#F0A8C0' },
+  },
+  {
     id: 'dollhouse-white-grey',
     name: 'Maison de poupée',
     category: 'toys',
