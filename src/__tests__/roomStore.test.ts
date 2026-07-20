@@ -6,6 +6,7 @@ describe('roomStore', () => {
     useRoomStore.getState().clearRoom()
     useRoomStore.getState().clearPending()
     useRoomStore.getState().select(null)
+    useRoomStore.getState().clearImportWarnings()
   })
 
   it('places an item when free', () => {
@@ -69,5 +70,30 @@ describe('roomStore', () => {
     expect(state.selectedId).toBe(id)
     expect(state.mode).toBe('edit')
     expect(state.pendingCatalogId).toBeNull()
+  })
+
+  it('replaceLayout skips unknown catalog ids', () => {
+    useRoomStore.getState().replaceLayout([
+      {
+        instanceId: 'a',
+        catalogId: 'bed-twin',
+        cx: 2,
+        cz: 3,
+        rot: 0,
+      },
+      {
+        instanceId: 'b',
+        catalogId: 'unknown-sofa',
+        cx: 4,
+        cz: 5,
+        rot: 90,
+      },
+    ])
+    const state = useRoomStore.getState()
+    expect(state.items).toHaveLength(1)
+    expect(state.items[0].catalogId).toBe('bed-twin')
+    expect(state.importWarnings).toEqual([
+      'Skipped unknown furniture: unknown-sofa',
+    ])
   })
 })

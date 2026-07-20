@@ -54,6 +54,13 @@
   cursor: not-allowed;
 }
 
+.top-bar-warning {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #8a5a20;
+  max-width: 16rem;
+}
+
 /* ── Workspace: catalogue + canvas ────────────────────────── */
 
 .workspace {

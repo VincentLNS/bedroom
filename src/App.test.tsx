@@ -15,6 +15,7 @@ describe('App', () => {
       mode: 'orbit',
       pendingCatalogId: null,
       dragging: false,
+      importWarnings: [],
     })
   })
 
@@ -22,14 +23,8 @@ describe('App', () => {
     render(<App />)
     expect(screen.getByRole('heading', { name: 'Bedroom' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Clear room' })).toBeTruthy()
-    expect(
-      (screen.getByRole('button', { name: 'Export' }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true)
-    expect(
-      (screen.getByRole('button', { name: 'Import' }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true)
+    expect(screen.getByRole('button', { name: 'Export' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Import' })).toBeTruthy()
     expect(screen.getByRole('navigation', { name: 'Furniture categories' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Twin Bed' })).toBeTruthy()
   })

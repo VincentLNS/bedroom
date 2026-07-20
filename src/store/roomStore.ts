@@ -21,6 +21,7 @@ type RoomState = {
   pendingCatalogId: string | null
   /** True while drag-moving a selected item (disables orbit). */
   dragging: boolean
+  importWarnings: string[]
   place: (catalogId: string, cx: number, cz: number, rot: Rotation) => boolean
   move: (instanceId: string, cx: number, cz: number) => boolean
   rotateSelected: () => boolean
@@ -31,6 +32,7 @@ type RoomState = {
   clearPending: () => void
   clearRoom: () => void
   replaceLayout: (items: PlacedItem[]) => void
+  clearImportWarnings: () => void
   getOccupied: () => PlacedFootprint[]
 }
 
@@ -53,6 +55,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   mode: 'orbit',
   pendingCatalogId: null,
   dragging: false,
+  importWarnings: [],
 
   getOccupied: () => toOccupied(get().items),
 
@@ -146,5 +149,22 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   clearRoom: () =>
     set({ items: [], selectedId: null, dragging: false }),
 
-  replaceLayout: (items) => set({ items, selectedId: null, dragging: false }),
+  replaceLayout: (items) => {
+    const warnings: string[] = []
+    const valid = items.filter((item) => {
+      if (getCatalogItem(item.catalogId)) return true
+      const message = `Skipped unknown furniture: ${item.catalogId}`
+      warnings.push(message)
+      console.warn(message)
+      return false
+    })
+    set({
+      items: valid,
+      selectedId: null,
+      dragging: false,
+      importWarnings: warnings,
+    })
+  },
+
+  clearImportWarnings: () => set({ importWarnings: [] }),
 }))
