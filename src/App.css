@@ -1,3 +1,34 @@
 .app {
-  text-align: center;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 252, 248, 0.92);
+  border-bottom: 1px solid rgba(44, 42, 40, 0.08);
+}
+
+.app-bar h1 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.scene-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+
+.scene-host canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
