@@ -22,6 +22,8 @@ export function PlacementController() {
   const placing = mode === 'place' && catalog?.visual.type === 'primitive'
 
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
+    // Clic droit = orbit / annuler pose (géré ailleurs), jamais placer.
+    if (e.button !== 0) return
     // Drag-move owns the gesture once started on furniture.
     if (dragging) return
 

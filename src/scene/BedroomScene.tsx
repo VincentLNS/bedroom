@@ -1,20 +1,15 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
 import { Room } from '../room/Room'
 import { FloorGrid } from '../room/FloorGrid'
 import { SceneLights } from '../room/lighting'
 import { GhostPreview } from '../furniture/GhostPreview'
 import { PlacedFurniture } from '../furniture/PlacedFurniture'
 import { PlacementController } from './PlacementController'
-import { useRoomStore } from '../store/roomStore'
+import { SceneCameraControls } from './SceneCameraControls'
 
 export function BedroomScene() {
-  const placing = useRoomStore((s) => s.mode === 'place')
-  const dragging = useRoomStore((s) => s.dragging)
-  const orbitLocked = placing || dragging
-
   return (
-    <Canvas camera={{ position: [4, 5, 6], fov: 45 }}>
+    <Canvas camera={{ position: [3.2, 4.2, 5.2], fov: 42 }}>
       <color attach="background" args={['#f7efe8']} />
       <SceneLights />
       <Room />
@@ -22,13 +17,7 @@ export function BedroomScene() {
       <PlacedFurniture />
       <GhostPreview />
       <PlacementController />
-      <OrbitControls
-        makeDefault
-        target={[0, 0.8, 0]}
-        maxPolarAngle={Math.PI / 2.05}
-        enableRotate={!orbitLocked}
-        enablePan={!orbitLocked}
-      />
+      <SceneCameraControls />
     </Canvas>
   )
 }

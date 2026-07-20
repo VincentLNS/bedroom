@@ -104,7 +104,7 @@ export function TopBar() {
             disabled={!hasPending && !placing}
             title={
               hasPending || placing
-                ? 'Mode pose — cliquez sur le sol pour placer'
+                ? 'Mode pose — clic gauche pour poser · clic droit ou Échap pour annuler · clic droit maintenu pour tourner la vue'
                 : 'Choisissez un meuble dans le catalogue pour poser'
             }
           >
