@@ -13,6 +13,13 @@ describe('roomStore', () => {
       roomTitle: 'Chambre de Louise',
       challengesDone: [],
       activeRoom: 'bedroom',
+      historyByRoom: {
+        bedroom: { undo: [], redo: [] },
+        hall: { undo: [], redo: [] },
+        salon: { undo: [], redo: [] },
+        cuisine: { undo: [], redo: [] },
+        bathroom: { undo: [], redo: [] },
+      },
     })
     useRoomStore.getState().clearRoom()
     useRoomStore.getState().clearPending()
@@ -275,5 +282,27 @@ describe('roomStore', () => {
     expect(useRoomStore.getState().roomTitle).toBe('Chambre de Léa')
     useRoomStore.getState().setRoomTitle('   ')
     expect(useRoomStore.getState().roomTitle).toBe('Chambre de Louise')
+  })
+
+  it('keeps per-room undo history when switching wings', () => {
+    useRoomStore.setState({ parentLock: false, challengesDone: [] })
+
+    useRoomStore.getState().clearRoom()
+    expect(useRoomStore.getState().place('lightbox-louise', 5, 5, 0)).toBe(true)
+    expect(useRoomStore.getState().items).toHaveLength(1)
+
+    useRoomStore.getState().setActiveRoom('cuisine')
+    useRoomStore.getState().clearRoom()
+    expect(useRoomStore.getState().place('plant-succulent', 5, 5, 0)).toBe(true)
+
+    useRoomStore.getState().setActiveRoom('bedroom')
+    expect(useRoomStore.getState().items).toHaveLength(1)
+    expect(useRoomStore.getState().undo()).toBe(true)
+    expect(useRoomStore.getState().items).toHaveLength(0)
+
+    useRoomStore.getState().setActiveRoom('cuisine')
+    expect(useRoomStore.getState().items).toHaveLength(1)
+    expect(useRoomStore.getState().undo()).toBe(true)
+    expect(useRoomStore.getState().items).toHaveLength(0)
   })
 })

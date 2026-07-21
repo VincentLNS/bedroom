@@ -8,6 +8,36 @@ type WireMsg =
   | { type: 'full'; snapshot: HouseSnapshot }
   | { type: 'patch'; snapshot: HouseSnapshot }
 
+type SessionMode = 'idle' | 'host' | 'guest'
+
+/** Module-level session so Fermer keeps the link alive. */
+const session = {
+  peer: null as Peer | null,
+  conn: null as DataConnection | null,
+  mode: 'idle' as SessionMode,
+  code: '',
+  joinCode: '',
+  status: 'Choisis : créer ou rejoindre.',
+  connected: false,
+}
+
+function peerErrorMessage(type: string): string {
+  switch (type) {
+    case 'peer-unavailable':
+      return 'Code introuvable — vérifie ou redemande-le.'
+    case 'network':
+      return 'Réseau coupé — même Wi‑Fi recommandé.'
+    case 'disconnected':
+      return 'Déconnecté du serveur PeerJS.'
+    case 'server-error':
+      return 'Serveur Co-déco indisponible.'
+    case 'browser-incompatible':
+      return 'Navigateur trop ancien pour Co-déco.'
+    default:
+      return 'Co-déco impossible pour le moment.'
+  }
+}
+
 function snapshotFromStore(): HouseSnapshot {
   const s = useRoomStore.getState()
   return {
@@ -28,14 +58,26 @@ function applySnapshot(snapshot: HouseSnapshot, silent = true) {
     selectedId: null,
     pendingCatalogId: null,
     mode: 'orbit',
+    undoStack: [],
+    redoStack: [],
   })
-  // release on next tick so local subscribers don't echo
   queueMicrotask(() => {
     useRoomStore.setState({ applyingRemote: false })
   })
   if (!silent) {
-    useRoomStore.getState().flashToast('Chambre synchronisée', 'ok')
+    useRoomStore.getState().flashToast('Maison synchronisée', 'ok')
   }
+}
+
+function destroySession() {
+  session.conn?.close()
+  session.peer?.destroy()
+  session.conn = null
+  session.peer = null
+  session.mode = 'idle'
+  session.code = ''
+  session.connected = false
+  session.status = 'Choisis : créer ou rejoindre.'
 }
 
 type Props = {
@@ -45,26 +87,32 @@ type Props = {
 
 export function CoPlayModal({ open, onClose }: Props) {
   const flashToast = useRoomStore((s) => s.flashToast)
-  const [mode, setMode] = useState<'idle' | 'host' | 'guest'>('idle')
-  const [code, setCode] = useState('')
-  const [joinCode, setJoinCode] = useState('')
-  const [status, setStatus] = useState('Choisis : créer ou rejoindre.')
-  const peerRef = useRef<Peer | null>(null)
-  const connRef = useRef<DataConnection | null>(null)
+  const [mode, setMode] = useState<SessionMode>(session.mode)
+  const [code, setCode] = useState(session.code)
+  const [joinCode, setJoinCode] = useState(session.joinCode)
+  const [status, setStatus] = useState(session.status)
+  const [connected, setConnected] = useState(session.connected)
+  const syncingRef = useRef(false)
+
+  const pushStatus = (next: string) => {
+    session.status = next
+    setStatus(next)
+  }
 
   useEffect(() => {
     if (!open) return
-    return () => {
-      connRef.current?.close()
-      peerRef.current?.destroy()
-      connRef.current = null
-      peerRef.current = null
-    }
+    setMode(session.mode)
+    setCode(session.code)
+    setJoinCode(session.joinCode)
+    setStatus(session.status)
+    setConnected(session.connected)
   }, [open])
 
   useEffect(() => {
     if (!open || mode === 'idle') return
+    syncingRef.current = true
     const unsub = useRoomStore.subscribe((state, prev) => {
+      if (!syncingRef.current) return
       if (state.applyingRemote) return
       if (
         state.items === prev.items &&
@@ -73,23 +121,35 @@ export function CoPlayModal({ open, onClose }: Props) {
       ) {
         return
       }
-      const conn = connRef.current
+      const conn = session.conn
       if (!conn?.open) return
       conn.send({
         type: 'patch',
         snapshot: snapshotFromStore(),
       } satisfies WireMsg)
     })
-    return unsub
+    return () => {
+      syncingRef.current = false
+      unsub()
+    }
   }, [open, mode])
 
   const wireConn = (conn: DataConnection, asHost: boolean) => {
-    connRef.current = conn
+    session.conn = conn
     conn.on('open', () => {
-      setStatus(asHost ? 'Ami·e connecté·e — décorez ensemble !' : 'Connecté·e !')
+      session.connected = true
+      setConnected(true)
+      pushStatus(
+        asHost
+          ? 'Ami·e connecté·e — décorez ensemble !'
+          : 'Connecté·e — la maison se synchronise.',
+      )
       flashToast('Co-déco en direct !', 'ok')
       if (asHost) {
-        conn.send({ type: 'full', snapshot: snapshotFromStore() } satisfies WireMsg)
+        conn.send({
+          type: 'full',
+          snapshot: snapshotFromStore(),
+        } satisfies WireMsg)
       }
     })
     conn.on('data', (raw) => {
@@ -99,45 +159,77 @@ export function CoPlayModal({ open, onClose }: Props) {
       }
     })
     conn.on('close', () => {
-      setStatus('Connexion fermée.')
+      session.connected = false
+      setConnected(false)
+      pushStatus('Connexion fermée — tu peux réessayer.')
       flashToast('Co-déco terminée', 'info')
+    })
+    conn.on('error', () => {
+      pushStatus('Lien instable — réessaie dans un instant.')
+      flashToast('Lien Co-déco instable', 'error')
     })
   }
 
   const startHost = () => {
+    destroySession()
+    session.mode = 'host'
     setMode('host')
-    setStatus('Ouverture du salon…')
+    setConnected(false)
+    pushStatus('Ouverture du salon…')
     const peer = new Peer()
-    peerRef.current = peer
+    session.peer = peer
     peer.on('open', (id) => {
+      session.code = id
       setCode(id)
-      setStatus('Donne ce code à ton ami·e.')
+      pushStatus('Donne ce code à ton ami·e (même Wi‑Fi recommandé).')
     })
-    peer.on('connection', (conn) => wireConn(conn, true))
+    peer.on('connection', (conn) => {
+      // Prefer a single guest for this beta.
+      if (session.conn?.open) {
+        conn.close()
+        return
+      }
+      wireConn(conn, true)
+    })
     peer.on('error', (err) => {
-      setStatus(`Erreur : ${err.type}`)
-      flashToast('Co-déco impossible', 'error')
+      const msg = peerErrorMessage(String(err.type))
+      pushStatus(msg)
+      flashToast(msg, 'error')
     })
   }
 
-  const startGuest = () => {
-    const hostId = joinCode.trim()
+  const startGuest = (hostId = joinCode.trim()) => {
     if (!hostId) {
       flashToast('Entre le code', 'error')
       return
     }
+    destroySession()
+    session.joinCode = hostId
+    session.mode = 'guest'
+    setJoinCode(hostId)
     setMode('guest')
-    setStatus('Connexion…')
+    setConnected(false)
+    pushStatus('Connexion…')
     const peer = new Peer()
-    peerRef.current = peer
+    session.peer = peer
     peer.on('open', () => {
       const conn = peer.connect(hostId, { reliable: true })
       wireConn(conn, false)
     })
     peer.on('error', (err) => {
-      setStatus(`Erreur : ${err.type}`)
-      flashToast('Code invalide ou hors-ligne', 'error')
+      const msg = peerErrorMessage(String(err.type))
+      pushStatus(msg)
+      flashToast(msg, 'error')
     })
+  }
+
+  const leaveSalon = () => {
+    destroySession()
+    setMode('idle')
+    setCode('')
+    setConnected(false)
+    pushStatus('Choisis : créer ou rejoindre.')
+    flashToast('Salon fermé', 'info')
   }
 
   if (!open) return null
@@ -151,7 +243,18 @@ export function CoPlayModal({ open, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="magic-modal-title">Co-déco en direct</h2>
-        <p className="magic-modal-hint">{status}</p>
+        <p className="magic-modal-hint">
+          Beta · même Wi‑Fi recommandé · le code est temporaire.
+        </p>
+        <p className="magic-modal-hint" aria-live="polite">
+          {status}
+        </p>
+        {connected && (
+          <p className="coplay-live" role="status">
+            ● En direct
+          </p>
+        )}
+
         {mode === 'idle' && (
           <div className="magic-modal-actions magic-modal-actions--stack">
             <button
@@ -165,26 +268,35 @@ export function CoPlayModal({ open, onClose }: Props) {
               <input
                 className="coplay-input"
                 value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
+                onChange={(e) => {
+                  session.joinCode = e.target.value
+                  setJoinCode(e.target.value)
+                }}
                 placeholder="Code de l’ami·e"
                 aria-label="Code co-déco"
               />
-              <button type="button" className="top-bar-btn" onClick={startGuest}>
+              <button
+                type="button"
+                className="top-bar-btn"
+                onClick={() => startGuest()}
+              >
                 Rejoindre
               </button>
             </div>
           </div>
         )}
+
         {mode === 'host' && code && (
           <p className="coplay-code" aria-live="polite">
             Code : <strong>{code}</strong>
           </p>
         )}
+
         <div className="magic-modal-actions">
           <button type="button" className="top-bar-btn" onClick={onClose}>
-            Fermer
+            {connected ? 'Continuer (garder le lien)' : 'Fermer'}
           </button>
-          {code && (
+          {mode === 'host' && code && (
             <button
               type="button"
               className="top-bar-btn top-bar-btn--primary"
@@ -198,6 +310,25 @@ export function CoPlayModal({ open, onClose }: Props) {
               }}
             >
               Copier le code
+            </button>
+          )}
+          {mode === 'host' && !connected && (
+            <button type="button" className="top-bar-btn" onClick={startHost}>
+              Relancer le salon
+            </button>
+          )}
+          {mode === 'guest' && !connected && (
+            <button
+              type="button"
+              className="top-bar-btn"
+              onClick={() => startGuest(session.joinCode || joinCode)}
+            >
+              Réessayer
+            </button>
+          )}
+          {mode !== 'idle' && (
+            <button type="button" className="top-bar-btn" onClick={leaveSalon}>
+              Quitter le salon
             </button>
           )}
         </div>

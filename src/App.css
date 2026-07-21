@@ -1722,6 +1722,14 @@ button:focus:not(:focus-visible) {
   word-break: break-all;
 }
 
+.coplay-live {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #2f8f6b;
+  text-align: center;
+}
+
 .gallery-section-title {
   margin: 0.85rem 0 0.4rem;
   font-size: 0.78rem;

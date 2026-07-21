@@ -8,6 +8,7 @@ import { getCatalogItem } from '../catalog'
 import {
   cloneHouseRooms,
   emptyHouseRooms,
+  HOUSE_ROOM_IDS,
   roomLabel,
   type HouseRoomId,
 } from '../house/rooms'
@@ -66,6 +67,18 @@ export type SnapPulseState = {
 const HISTORY_LIMIT = 40
 const RECENTS_LIMIT = 12
 
+type RoomHistory = { undo: PlacedItem[][]; redo: PlacedItem[][] }
+
+function emptyHistory(): RoomHistory {
+  return { undo: [], redo: [] }
+}
+
+function emptyHistoryByRoom(): Record<HouseRoomId, RoomHistory> {
+  const out = {} as Record<HouseRoomId, RoomHistory>
+  for (const id of HOUSE_ROOM_IDS) out[id] = emptyHistory()
+  return out
+}
+
 function cloneItems(items: PlacedItem[]): PlacedItem[] {
   return items.map((item) => ({ ...item }))
 }
@@ -88,6 +101,11 @@ type RoomState = {
   importWarnings: string[]
   undoStack: PlacedItem[][]
   redoStack: PlacedItem[][]
+  /** Per-room history so switching wings keeps each stack. */
+  historyByRoom: Record<
+    HouseRoomId,
+    { undo: PlacedItem[][]; redo: PlacedItem[][] }
+  >
   toast: ToastState | null
   snapPulse: SnapPulseState | null
   photoMode: boolean
@@ -296,6 +314,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   importWarnings: [],
   undoStack: [],
   redoStack: [],
+  historyByRoom: emptyHistoryByRoom(),
   toast: null,
   snapPulse: null,
   photoMode: false,
@@ -348,6 +367,14 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       ...state.rooms,
       [state.activeRoom]: cloneItems(state.items),
     }
+    const historyByRoom = {
+      ...state.historyByRoom,
+      [state.activeRoom]: {
+        undo: state.undoStack,
+        redo: state.redoStack,
+      },
+    }
+    const nextHist = historyByRoom[room] ?? emptyHistory()
     set({
       rooms,
       activeRoom: room,
@@ -356,8 +383,9 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       pendingCatalogId: null,
       mode: 'orbit',
       dragging: false,
-      undoStack: [],
-      redoStack: [],
+      historyByRoom,
+      undoStack: nextHist.undo,
+      redoStack: nextHist.redo,
     })
     get().flashToast(roomLabel(room), 'info')
     get().requestCameraHome()
@@ -376,6 +404,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       dragging: false,
       undoStack: [],
       redoStack: [],
+      historyByRoom: emptyHistoryByRoom(),
       importWarnings: [],
     })
     // Import / boot / modèles : pas d’auto-complétion des défis.
@@ -778,6 +807,10 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       importWarnings: warnings,
       undoStack: [],
       redoStack: [],
+      historyByRoom: {
+        ...get().historyByRoom,
+        [get().activeRoom]: emptyHistory(),
+      },
     })
     // Modèles / imports : pas d’auto-complétion des défis.
   },

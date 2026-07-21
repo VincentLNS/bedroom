@@ -13,6 +13,7 @@ export default defineConfig({
         'icons/apple-touch-icon.png',
         'icons/icon-192.png',
         'icons/icon-512.png',
+        'icons/icon-512-maskable.png',
       ],
       manifest: {
         name: 'Mini Déco — Chambre de Louise',
@@ -38,10 +39,16 @@ export default defineConfig({
             purpose: 'any',
           },
           {
+            src: '/icons/icon-512-maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+          {
             src: '/icons/minideco.svg',
             sizes: 'any',
             type: 'image/svg+xml',
-            purpose: 'any maskable',
+            purpose: 'any',
           },
         ],
       },

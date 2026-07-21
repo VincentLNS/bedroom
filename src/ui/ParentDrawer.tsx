@@ -429,7 +429,7 @@ export function ParentDrawer({ open, onClose, onOpenCoPlay }: Props) {
               onOpenCoPlay()
               onClose()
             }}
-            title="Expérimental — connexion PeerJS"
+            title="Beta — décorer à deux via PeerJS"
           >
             Co-déco (beta)
           </button>
