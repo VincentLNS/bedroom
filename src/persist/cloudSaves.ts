@@ -1,5 +1,4 @@
-import type { BedroomFileV1 } from './schema'
-import { parseLayout } from './schema'
+import { parseAnySave, type HouseFileV2 } from './houseFile'
 
 const CLOUD_KEY = 'minideco-cloud-saves-v1'
 const MAX_SAVES = 12
@@ -8,7 +7,7 @@ export type CloudSave = {
   id: string
   name: string
   savedAt: number
-  file: BedroomFileV1
+  file: HouseFileV2
 }
 
 function readAll(): CloudSave[] {
@@ -23,7 +22,7 @@ function readAll(): CloudSave[] {
       const e = entry as Record<string, unknown>
       if (typeof e.id !== 'string' || typeof e.name !== 'string') continue
       if (typeof e.savedAt !== 'number') continue
-      const file = parseLayout(e.file)
+      const file = parseAnySave(e.file)
       if (!file.ok) continue
       out.push({ id: e.id, name: e.name, savedAt: e.savedAt, file: file.file })
     }
@@ -41,8 +40,8 @@ export function listCloudSaves(): CloudSave[] {
   return readAll().sort((a, b) => b.savedAt - a.savedAt)
 }
 
-export function saveToCloud(name: string, file: BedroomFileV1): CloudSave {
-  const label = name.trim() || 'Ma chambre'
+export function saveToCloud(name: string, file: HouseFileV2): CloudSave {
+  const label = name.trim() || 'Ma maison'
   const saves = readAll().filter((s) => s.name !== label)
   const entry: CloudSave = {
     id: crypto.randomUUID(),

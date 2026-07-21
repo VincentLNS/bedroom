@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { fileToPlacedItems, parseLayout, serializeLayout } from '../persist'
+import {
+  bedroomFileToHouse,
+  fileToPlacedItems,
+  houseFileToRooms,
+  parseAnySave,
+  parseLayout,
+  serializeHouse,
+  serializeHouseFromState,
+  serializeLayout,
+} from '../persist'
+import { emptyHouseRooms } from '../house/rooms'
+import { createLouiseLayout } from '../presets/louise'
 
 describe('persist', () => {
   it('round-trips a layout', () => {
@@ -66,5 +77,63 @@ describe('persist', () => {
     if (parsed.ok) {
       expect(fileToPlacedItems(parsed.file)[1].parentId).toBe('bed')
     }
+  })
+
+  it('round-trips a full house', () => {
+    const rooms = emptyHouseRooms()
+    rooms.bedroom = createLouiseLayout()
+    const file = serializeHouse(rooms, 'hall', 'Maison de Léa')
+    expect(file.version).toBe(2)
+    expect(file.activeRoom).toBe('hall')
+    expect(file.title).toBe('Maison de Léa')
+    expect(file.rooms.bedroom.length).toBeGreaterThanOrEqual(12)
+    expect(file.rooms.hall.length).toBeGreaterThanOrEqual(6)
+    expect(file.rooms.salon.length).toBeGreaterThanOrEqual(8)
+
+    const parsed = parseAnySave(file)
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+    const restored = houseFileToRooms(parsed.file)
+    expect(restored.bedroom[0]?.catalogId).toBe(rooms.bedroom[0]?.catalogId)
+    expect(restored.hall).toHaveLength(rooms.hall.length)
+    expect(restored.salon).toHaveLength(rooms.salon.length)
+  })
+
+  it('migrates legacy v1 bedroom into house with default hall/salon', () => {
+    const legacy = serializeLayout(createLouiseLayout())
+    const migrated = bedroomFileToHouse(legacy)
+    expect(migrated.version).toBe(2)
+    expect(migrated.activeRoom).toBe('bedroom')
+    expect(migrated.rooms.bedroom).toHaveLength(legacy.items.length)
+    expect(migrated.rooms.hall.length).toBeGreaterThan(0)
+    expect(migrated.rooms.salon.length).toBeGreaterThan(0)
+
+    const viaParse = parseAnySave(legacy)
+    expect(viaParse.ok).toBe(true)
+    if (viaParse.ok) {
+      expect(viaParse.file.rooms.bedroom).toHaveLength(legacy.items.length)
+    }
+  })
+
+  it('serializeHouseFromState prefers live items for active room', () => {
+    const rooms = emptyHouseRooms()
+    const live = [
+      {
+        instanceId: 'only',
+        catalogId: 'lightbox-louise',
+        cx: 4,
+        cz: 4,
+        rot: 0 as const,
+      },
+    ]
+    const file = serializeHouseFromState({
+      rooms,
+      activeRoom: 'bedroom',
+      items: live,
+      roomTitle: 'Test',
+    })
+    expect(file.rooms.bedroom).toHaveLength(1)
+    expect(file.rooms.bedroom[0].catalogId).toBe('lightbox-louise')
+    expect(file.title).toBe('Test')
   })
 })

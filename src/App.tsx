@@ -2,9 +2,10 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { Analytics } from '@vercel/analytics/react'
 import {
   fileToPlacedItems,
-  loadFromLocalStorage,
-  saveToLocalStorage,
-  serializeLayout,
+  houseFileToRooms,
+  loadHouseFromLocalStorage,
+  saveHouseToLocalStorage,
+  serializeHouseFromState,
 } from './persist'
 import {
   clearShareParamsFromUrl,
@@ -126,10 +127,13 @@ export default function App() {
         clearShareParamsFromUrl()
       }
 
-      const saved = loadFromLocalStorage()
+      const saved = loadHouseFromLocalStorage()
       if (saved) {
-        house.bedroom = fileToPlacedItems(saved)
-        useRoomStore.getState().replaceHouse(house, 'bedroom')
+        const rooms = houseFileToRooms(saved)
+        useRoomStore.getState().replaceHouse(rooms, saved.activeRoom)
+        if (saved.title) {
+          useRoomStore.getState().setRoomTitle(saved.title)
+        }
       } else if (useRoomStore.getState().items.length === 0) {
         useRoomStore.getState().replaceHouse(house, 'bedroom')
       }
@@ -138,10 +142,16 @@ export default function App() {
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined
     const unsubscribe = useRoomStore.subscribe((state, prevState) => {
-      if (state.items !== prevState.items) {
+      if (
+        state.items !== prevState.items ||
+        state.rooms !== prevState.rooms ||
+        state.activeRoom !== prevState.activeRoom ||
+        state.roomTitle !== prevState.roomTitle
+      ) {
         if (timeoutId !== undefined) clearTimeout(timeoutId)
         timeoutId = setTimeout(() => {
-          saveToLocalStorage(serializeLayout(useRoomStore.getState().items))
+          const s = useRoomStore.getState()
+          saveHouseToLocalStorage(serializeHouseFromState(s))
         }, AUTOSAVE_DEBOUNCE_MS)
       }
 

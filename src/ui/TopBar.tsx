@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   downloadBedroomFile,
-  fileToPlacedItems,
-  readBedroomFile,
-  serializeLayout,
+  houseFileToRooms,
+  readHouseFile,
+  serializeHouseFromState,
 } from '../persist'
 import {
   deleteCloudSave,
@@ -43,8 +43,8 @@ export function TopBar({
   const clearPending = useRoomStore((s) => s.clearPending)
   const select = useRoomStore((s) => s.select)
   const replaceLayout = useRoomStore((s) => s.replaceLayout)
+  const replaceHouse = useRoomStore((s) => s.replaceHouse)
   const clearImportWarnings = useRoomStore((s) => s.clearImportWarnings)
-  const items = useRoomStore((s) => s.items)
   const importWarnings = useRoomStore((s) => s.importWarnings)
   const mode = useRoomStore((s) => s.mode)
   const pendingCatalogId = useRoomStore((s) => s.pendingCatalogId)
@@ -240,13 +240,21 @@ export function TopBar({
     setMoreOpen(false)
   }
 
+  const applyHouseFile = (file: Parameters<typeof houseFileToRooms>[0]) => {
+    clearImportWarnings()
+    replaceHouse(houseFileToRooms(file), file.activeRoom)
+    if (file.title) setRoomTitle(file.title)
+    clearPending()
+    select(null)
+  }
+
   const handleCloudSave = () => {
     const name =
-      window.prompt('Nom de la sauvegarde cloud (sur cet appareil) ?', 'Ma chambre') ??
+      window.prompt('Nom de la sauvegarde cloud (sur cet appareil) ?', 'Ma maison') ??
       ''
     if (!name.trim()) return
-    saveToCloud(name, serializeLayout(items))
-    flashToast('Sauvegardé dans le cloud local', 'ok')
+    saveToCloud(name, serializeHouseFromState(useRoomStore.getState()))
+    flashToast('Maison sauvegardée (cloud local)', 'ok')
     setMoreOpen(false)
   }
 
@@ -275,16 +283,15 @@ export function TopBar({
     if (!save) return
     if (
       !window.confirm(
-        `Ouvrir « ${save.name} » ? Tes meubles actuels seront remplacés.`,
+        `Ouvrir « ${save.name} » ? Toute la maison actuelle sera remplacée.`,
       )
     ) {
       return
     }
     const loaded = loadCloudSave(save.id)
     if (!loaded) return
-    clearImportWarnings()
-    replaceLayout(fileToPlacedItems(loaded.file))
-    flashToast('Sauvegarde ouverte', 'ok')
+    applyHouseFile(loaded.file)
+    flashToast('Maison ouverte', 'ok')
     setMoreOpen(false)
   }
 
@@ -304,7 +311,8 @@ export function TopBar({
   }
 
   const handleExport = () => {
-    downloadBedroomFile(serializeLayout(items))
+    downloadBedroomFile(serializeHouseFromState(useRoomStore.getState()))
+    flashToast('Maison exportée', 'ok')
     setMoreOpen(false)
   }
 
@@ -321,7 +329,7 @@ export function TopBar({
     event.target.value = ''
     if (!file) return
 
-    const result = await readBedroomFile(file)
+    const result = await readHouseFile(file)
     if (!result.ok) {
       window.alert(result.error)
       return
@@ -329,14 +337,14 @@ export function TopBar({
 
     if (
       !window.confirm(
-        'Ouvrir ce plan de chambre ? Tes meubles actuels seront remplacés.',
+        'Ouvrir ce plan ? Toute la maison actuelle sera remplacée.',
       )
     ) {
       return
     }
 
-    clearImportWarnings()
-    replaceLayout(fileToPlacedItems(result.file))
+    applyHouseFile(result.file)
+    flashToast('Maison ouverte', 'ok')
     setMoreOpen(false)
   }
 
