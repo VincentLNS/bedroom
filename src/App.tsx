@@ -261,6 +261,7 @@ export default function App() {
         onOpenShareQr={() => setShareQrOpen(true)}
         onOpenGallery={() => setGalleryOpen(true)}
         onOpenParent={() => setParentOpen(true)}
+        onOpenCoPlay={() => setCoPlayOpen(true)}
       />
       {phone && !photoMode && (
         <div className="phone-room-strip">

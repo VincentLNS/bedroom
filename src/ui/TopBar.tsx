@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useCoPlayPresence } from '../coplay/useCoPlayPresence'
 import { useRoomStore, type WallMode } from '../store/roomStore'
 import { CoachTip } from './CoachTip'
 import { useCoarsePointer } from './useCoarsePointer'
@@ -16,12 +17,14 @@ type TopBarProps = {
   onOpenShareQr: () => void
   onOpenGallery: () => void
   onOpenParent: () => void
+  onOpenCoPlay: () => void
 }
 
 export function TopBar({
   onOpenShareQr,
   onOpenGallery,
   onOpenParent,
+  onOpenCoPlay,
 }: TopBarProps) {
   const mode = useRoomStore((s) => s.mode)
   const pendingCatalogId = useRoomStore((s) => s.pendingCatalogId)
@@ -49,6 +52,7 @@ export function TopBar({
   const setMusicOn = useRoomStore((s) => s.setMusicOn)
   const parentLock = useRoomStore((s) => s.parentLock)
   const importWarnings = useRoomStore((s) => s.importWarnings)
+  const coPlay = useCoPlayPresence()
   const coarse = useCoarsePointer()
   const phone = usePhoneLayout()
   const compact = coarse || phone
@@ -237,6 +241,33 @@ export function TopBar({
       >
         Modèles
       </button>
+      {(coPlay.connected || coPlay.waiting || coPlay.mode !== 'idle') && (
+        <button
+          type="button"
+          className={
+            coPlay.connected
+              ? 'top-bar-btn top-bar-btn--live'
+              : 'top-bar-btn top-bar-btn--primary'
+          }
+          onClick={() => {
+            onOpenCoPlay()
+            setMoreOpen(false)
+          }}
+          title={
+            coPlay.connected
+              ? 'Co-déco en direct — rouvrir'
+              : coPlay.code
+                ? `Salon ${coPlay.code} — en attente`
+                : 'Co-déco'
+          }
+        >
+          {coPlay.connected
+            ? '● Direct'
+            : coPlay.code
+              ? `Salon ${coPlay.code}`
+              : 'Co-déco…'}
+        </button>
+      )}
       <button
         type="button"
         className={

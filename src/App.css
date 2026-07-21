@@ -247,6 +247,26 @@
   background: #6fbfab;
 }
 
+.top-bar-btn--live {
+  background: color-mix(in srgb, #3cb371 55%, white);
+  box-shadow: 0 0 0 2px color-mix(in srgb, #2f8f6b 35%, transparent);
+  animation: coplay-pulse 1.6s ease-in-out infinite;
+}
+
+.top-bar-btn--live:hover:not(:disabled) {
+  background: color-mix(in srgb, #3cb371 70%, white);
+}
+
+@keyframes coplay-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px color-mix(in srgb, #2f8f6b 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, #2f8f6b 18%, transparent);
+  }
+}
+
 .top-bar-warning {
   margin: 0;
   font-size: 0.78rem;
@@ -1720,6 +1740,13 @@ button:focus:not(:focus-visible) {
   border: 2px solid color-mix(in srgb, var(--ink) 16%, transparent);
   font-size: 0.95rem;
   word-break: break-all;
+  text-align: center;
+}
+
+.coplay-code-big {
+  font-size: 1.85rem;
+  letter-spacing: 0.18em;
+  font-weight: 900;
 }
 
 .coplay-live {
