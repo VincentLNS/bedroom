@@ -168,17 +168,17 @@ export function OutdoorScenery() {
 
   return (
     <group>
-      {/* Pelouse étendue autour (sous le socle, visible en orbit) */}
+      {/* Pelouse quasi au niveau du sol chambre — éviter z-fight + flottement */}
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.025, 0]}
+        position={[0, -0.001, 0]}
         receiveShadow
       >
         <planeGeometry args={[42, 42]} />
         <meshStandardMaterial color={GRASS} roughness={1} />
       </mesh>
       {/* Anneau plus foncé pour la profondeur */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <ringGeometry args={[9, 20, 64]} />
         <meshBasicMaterial color={GRASS_DARK} transparent opacity={0.35} />
       </mesh>

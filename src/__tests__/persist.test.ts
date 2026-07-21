@@ -89,6 +89,8 @@ describe('persist', () => {
     expect(file.rooms.bedroom.length).toBeGreaterThanOrEqual(12)
     expect(file.rooms.hall.length).toBeGreaterThanOrEqual(6)
     expect(file.rooms.salon.length).toBeGreaterThanOrEqual(8)
+    expect(file.rooms.cuisine.length).toBeGreaterThanOrEqual(8)
+    expect(file.rooms.bathroom.length).toBeGreaterThanOrEqual(8)
 
     const parsed = parseAnySave(file)
     expect(parsed.ok).toBe(true)
@@ -97,9 +99,30 @@ describe('persist', () => {
     expect(restored.bedroom[0]?.catalogId).toBe(rooms.bedroom[0]?.catalogId)
     expect(restored.hall).toHaveLength(rooms.hall.length)
     expect(restored.salon).toHaveLength(rooms.salon.length)
+    expect(restored.cuisine).toHaveLength(rooms.cuisine.length)
+    expect(restored.bathroom).toHaveLength(rooms.bathroom.length)
   })
 
-  it('migrates legacy v1 bedroom into house with default hall/salon', () => {
+  it('soft-migrates old 3-wing house files with cuisine/bathroom presets', () => {
+    const rooms = emptyHouseRooms()
+    const legacy = {
+      version: 2 as const,
+      kind: 'mini-deco-house' as const,
+      activeRoom: 'bedroom' as const,
+      rooms: {
+        bedroom: serializeLayout(rooms.bedroom).items,
+        hall: serializeLayout(rooms.hall).items,
+        salon: serializeLayout(rooms.salon).items,
+      },
+    }
+    const parsed = parseAnySave(legacy)
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+    expect(parsed.file.rooms.cuisine.length).toBeGreaterThan(0)
+    expect(parsed.file.rooms.bathroom.length).toBeGreaterThan(0)
+  })
+
+  it('migrates legacy v1 bedroom into house with default wings', () => {
     const legacy = serializeLayout(createLouiseLayout())
     const migrated = bedroomFileToHouse(legacy)
     expect(migrated.version).toBe(2)
@@ -107,6 +130,8 @@ describe('persist', () => {
     expect(migrated.rooms.bedroom).toHaveLength(legacy.items.length)
     expect(migrated.rooms.hall.length).toBeGreaterThan(0)
     expect(migrated.rooms.salon.length).toBeGreaterThan(0)
+    expect(migrated.rooms.cuisine.length).toBeGreaterThan(0)
+    expect(migrated.rooms.bathroom.length).toBeGreaterThan(0)
 
     const viaParse = parseAnySave(legacy)
     expect(viaParse.ok).toBe(true)

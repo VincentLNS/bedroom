@@ -6,6 +6,8 @@ const TINY: Record<HouseRoomId, string> = {
   bedroom: 'Ch.',
   hall: 'Cou.',
   salon: 'Sal.',
+  cuisine: 'Cui.',
+  bathroom: 'Sdb',
 }
 
 type Props = {

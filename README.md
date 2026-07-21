@@ -26,7 +26,7 @@ npm run build
 
 ## Fonctions
 
-- Maison multi-pièces (chambre / couloir / salon) avec autosave complet
+- Maison multi-pièces (chambre / couloir / salon / cuisine / salle de bain) avec autosave complet
 - Lien partageable (`?r=…`) + QR + Web Share photo
 - Co-déco PeerJS, galerie locale, mode parent, sons / musique
 - Qualité graphique **Auto** (allège Kenney + ombres sur tablettes faibles)

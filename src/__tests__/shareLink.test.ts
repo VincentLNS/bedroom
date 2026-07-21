@@ -49,5 +49,7 @@ describe('shareLink', () => {
     expect(decoded.file.rooms.bedroom.length).toBe(rooms.bedroom.length)
     expect(decoded.file.rooms.hall.length).toBe(rooms.hall.length)
     expect(decoded.file.rooms.salon.length).toBe(rooms.salon.length)
+    expect(decoded.file.rooms.cuisine.length).toBe(rooms.cuisine.length)
+    expect(decoded.file.rooms.bathroom.length).toBe(rooms.bathroom.length)
   })
 })

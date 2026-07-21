@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { serializeLayout } from '../persist'
 import { buildShareUrl, copyText } from '../persist/shareLink'
+import { createBathroomLayout } from '../presets/bathroom'
+import { createCuisineLayout } from '../presets/cuisine'
 import { createHallLayout } from '../presets/hall'
 import { createLouiseLayout } from '../presets/louise'
 import { createSalonLayout } from '../presets/salon'
@@ -41,6 +43,22 @@ const FEATURED: GalleryEntry[] = [
     blurb: 'Porte-manteau, banc et tapis nuage.',
     room: 'hall',
     build: createHallLayout,
+  },
+  {
+    id: 'cuisine',
+    title: 'Cuisine rose',
+    author: 'Mini Déco',
+    blurb: 'Dinette, frigo jouet et table ronde.',
+    room: 'cuisine',
+    build: createCuisineLayout,
+  },
+  {
+    id: 'bathroom',
+    title: 'Salle de bain',
+    author: 'Mini Déco',
+    blurb: 'Lessive, miroir et paniers pastels.',
+    room: 'bathroom',
+    build: createBathroomLayout,
   },
 ]
 

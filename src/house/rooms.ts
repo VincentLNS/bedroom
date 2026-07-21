@@ -1,10 +1,17 @@
 import type { BedroomFileV1 } from '../persist/schema'
+import { createBathroomLayout } from '../presets/bathroom'
+import { createCuisineLayout } from '../presets/cuisine'
 import { createHallLayout } from '../presets/hall'
 import { createLouiseLayout } from '../presets/louise'
 import { createSalonLayout } from '../presets/salon'
 import type { PlacedItem } from '../store/roomStore'
 
-export type HouseRoomId = 'bedroom' | 'hall' | 'salon'
+export type HouseRoomId =
+  | 'bedroom'
+  | 'hall'
+  | 'salon'
+  | 'cuisine'
+  | 'bathroom'
 
 export const HOUSE_ROOMS: {
   id: HouseRoomId
@@ -14,7 +21,15 @@ export const HOUSE_ROOMS: {
   { id: 'bedroom', label: 'Chambre', short: 'Chambre' },
   { id: 'hall', label: 'Couloir', short: 'Couloir' },
   { id: 'salon', label: 'Salon', short: 'Salon' },
+  { id: 'cuisine', label: 'Cuisine', short: 'Cuisine' },
+  { id: 'bathroom', label: 'Salle de bain', short: 'Sdb' },
 ]
+
+export const HOUSE_ROOM_IDS: HouseRoomId[] = HOUSE_ROOMS.map((r) => r.id)
+
+export function roomLabel(id: HouseRoomId): string {
+  return HOUSE_ROOMS.find((r) => r.id === id)?.label ?? id
+}
 
 export type HouseSnapshot = {
   activeRoom: HouseRoomId
@@ -26,17 +41,21 @@ export function emptyHouseRooms(): Record<HouseRoomId, PlacedItem[]> {
     bedroom: createLouiseLayout(),
     hall: createHallLayout(),
     salon: createSalonLayout(),
+    cuisine: createCuisineLayout(),
+    bathroom: createBathroomLayout(),
   }
 }
 
 export function cloneHouseRooms(
-  rooms: Record<HouseRoomId, PlacedItem[]>,
+  rooms: Partial<Record<HouseRoomId, PlacedItem[]>>,
 ): Record<HouseRoomId, PlacedItem[]> {
-  return {
-    bedroom: rooms.bedroom.map((i) => ({ ...i })),
-    hall: rooms.hall.map((i) => ({ ...i })),
-    salon: rooms.salon.map((i) => ({ ...i })),
+  const defaults = emptyHouseRooms()
+  const out = {} as Record<HouseRoomId, PlacedItem[]>
+  for (const id of HOUSE_ROOM_IDS) {
+    const source = rooms[id] ?? defaults[id]
+    out[id] = source.map((i) => ({ ...i }))
   }
+  return out
 }
 
 /** Serialize active room only (legacy share / file). */

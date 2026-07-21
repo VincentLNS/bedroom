@@ -8,6 +8,7 @@ import { getCatalogItem } from '../catalog'
 import {
   cloneHouseRooms,
   emptyHouseRooms,
+  roomLabel,
   type HouseRoomId,
 } from '../house/rooms'
 import {
@@ -358,14 +359,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       undoStack: [],
       redoStack: [],
     })
-    get().flashToast(
-      room === 'bedroom'
-        ? 'Chambre'
-        : room === 'hall'
-          ? 'Couloir'
-          : 'Salon',
-      'info',
-    )
+    get().flashToast(roomLabel(room), 'info')
     get().requestCameraHome()
     get().refreshChallenges()
   },

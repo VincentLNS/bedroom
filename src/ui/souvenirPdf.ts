@@ -1,4 +1,5 @@
 import { captureScenePng } from '../scene/capture'
+import { roomLabel } from '../house/rooms'
 import { useRoomStore } from '../store/roomStore'
 
 /** Open a printable souvenir page (Save as PDF from the browser print dialog). */
@@ -7,12 +8,7 @@ export async function exportSouvenirPdf(): Promise<'ok' | 'no-photo' | 'blocked'
   const png = captureScenePng()
   if (!png) return 'no-photo'
 
-  const roomLabel =
-    activeRoom === 'bedroom'
-      ? 'Chambre'
-      : activeRoom === 'hall'
-        ? 'Couloir'
-        : 'Salon'
+  const roomName = roomLabel(activeRoom)
   const date = new Date().toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
@@ -77,7 +73,7 @@ export async function exportSouvenirPdf(): Promise<'ok' | 'no-photo' | 'blocked'
 <body>
   <div class="sheet">
     <h1>${escapeHtml(roomTitle)}</h1>
-    <p class="meta">${escapeHtml(roomLabel)} · ${escapeHtml(date)} · Mini Déco</p>
+    <p class="meta">${escapeHtml(roomName)} · ${escapeHtml(date)} · Mini Déco</p>
     <img src="${png}" alt="Vue de la chambre" />
     <div class="foot">
       <span>${stars} défi${stars === 1 ? '' : 's'} réussi${stars === 1 ? '' : 's'}</span>

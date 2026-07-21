@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import type { ThreeEvent } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
-import type { HouseRoomId } from '../house/rooms'
+import { roomLabel, type HouseRoomId } from '../house/rooms'
 import {
+  ROOM_DEPTH_M,
   ROOM_MIN_X,
   ROOM_MIN_Z,
   ROOM_WIDTH_M,
-  ROOM_DEPTH_M,
 } from '../room/constants'
 import { useRoomStore } from '../store/roomStore'
 import { usePhoneLayout } from '../ui/usePhoneLayout'
@@ -22,26 +22,88 @@ type Portal = {
   rotY: number
 }
 
+/**
+ * Door graph (≤3 exits; hall has a side door to cuisine):
+ *   bedroom ←→ hall ←→ salon
+ *                ↕
+ *             cuisine ←→ bathroom
+ */
 function portalsFor(active: HouseRoomId): Portal[] {
   const cx = ROOM_MIN_X + ROOM_WIDTH_M / 2
   const zDoor = ROOM_MIN_Z + 0.08
   const zWin = ROOM_MIN_Z + ROOM_DEPTH_M - 0.08
-  if (active === 'bedroom') {
-    return [
-      { to: 'hall', label: 'Couloir', x: cx - 0.6, z: zDoor, rotY: 0 },
-      { to: 'salon', label: 'Salon', x: cx + 0.6, z: zWin, rotY: Math.PI },
-    ]
+  const xSide = ROOM_MIN_X + 0.08
+  const zSide = ROOM_MIN_Z + ROOM_DEPTH_M / 2
+
+  switch (active) {
+    case 'bedroom':
+      return [
+        { to: 'hall', label: roomLabel('hall'), x: cx - 0.6, z: zDoor, rotY: 0 },
+        {
+          to: 'salon',
+          label: roomLabel('salon'),
+          x: cx + 0.6,
+          z: zWin,
+          rotY: Math.PI,
+        },
+      ]
+    case 'hall':
+      return [
+        {
+          to: 'bedroom',
+          label: roomLabel('bedroom'),
+          x: cx - 0.6,
+          z: zDoor,
+          rotY: 0,
+        },
+        {
+          to: 'salon',
+          label: roomLabel('salon'),
+          x: cx + 0.6,
+          z: zWin,
+          rotY: Math.PI,
+        },
+        {
+          to: 'cuisine',
+          label: roomLabel('cuisine'),
+          x: xSide,
+          z: zSide,
+          rotY: Math.PI / 2,
+        },
+      ]
+    case 'salon':
+      return [
+        { to: 'hall', label: roomLabel('hall'), x: cx - 0.6, z: zDoor, rotY: 0 },
+        {
+          to: 'bedroom',
+          label: roomLabel('bedroom'),
+          x: cx + 0.6,
+          z: zWin,
+          rotY: Math.PI,
+        },
+      ]
+    case 'cuisine':
+      return [
+        { to: 'hall', label: roomLabel('hall'), x: cx - 0.6, z: zDoor, rotY: 0 },
+        {
+          to: 'bathroom',
+          label: roomLabel('bathroom'),
+          x: cx + 0.6,
+          z: zWin,
+          rotY: Math.PI,
+        },
+      ]
+    case 'bathroom':
+      return [
+        {
+          to: 'cuisine',
+          label: roomLabel('cuisine'),
+          x: cx - 0.6,
+          z: zDoor,
+          rotY: 0,
+        },
+      ]
   }
-  if (active === 'hall') {
-    return [
-      { to: 'bedroom', label: 'Chambre', x: cx - 0.6, z: zDoor, rotY: 0 },
-      { to: 'salon', label: 'Salon', x: cx + 0.6, z: zWin, rotY: Math.PI },
-    ]
-  }
-  return [
-    { to: 'hall', label: 'Couloir', x: cx - 0.6, z: zDoor, rotY: 0 },
-    { to: 'bedroom', label: 'Chambre', x: cx + 0.6, z: zWin, rotY: Math.PI },
-  ]
 }
 
 function DoorPortal({ portal }: { portal: Portal }) {
@@ -57,7 +119,6 @@ function DoorPortal({ portal }: { portal: Portal }) {
     setActiveRoom(portal.to)
   }
 
-  // Phone: never float Html labels over the room (switcher is enough).
   const showLabel = !phone && (showDoorLabels || hover)
 
   return (

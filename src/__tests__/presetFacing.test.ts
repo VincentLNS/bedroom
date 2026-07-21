@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { createBathroomLayout } from '../presets/bathroom'
+import { createCuisineLayout } from '../presets/cuisine'
 import { createHallLayout } from '../presets/hall'
 import { createLouiseLayout } from '../presets/louise'
 import { createSalonLayout } from '../presets/salon'
@@ -34,4 +36,16 @@ describe('preset furniture facing', () => {
     expect(rot['hall-bench']).toBe(270)
     expect(rot['hall-mirror']).toBe(90)
   })
+
+  it('orients cuisine and bathroom storage into the room', () => {
+    const cuisine = byId(createCuisineLayout())
+    expect(cuisine['cuisine-fridge']).toBe(180)
+    expect(cuisine['cuisine-kitchen']).toBe(180)
+    expect(cuisine['cuisine-cabinet']).toBe(270)
+
+    const bath = byId(createBathroomLayout())
+    expect(bath['bath-washer']).toBe(180)
+    expect(bath['bath-mirror']).toBe(90)
+  })
 })
+
