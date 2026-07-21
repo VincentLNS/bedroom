@@ -162,7 +162,6 @@ function applyHomeView(
   controls.maxPolarAngle = Math.PI / 2.15
   controls.minDistance = phone ? 3.4 : 4
   controls.maxDistance = phone ? 10 : 11
-  controls.enableRotate = true
   controls.update()
 }
 
@@ -177,8 +176,14 @@ function applyPlanView(
   controls.maxPolarAngle = 0.35
   controls.minDistance = 6
   controls.maxDistance = 14
-  controls.enableRotate = true
   controls.update()
+}
+
+function isCameraInteractBusy(state: {
+  mode: string
+  dragging: boolean
+}): boolean {
+  return state.mode === 'place' || state.dragging
 }
 
 export function SceneCameraControls() {
@@ -228,6 +233,24 @@ export function SceneCameraControls() {
     return () => controls.removeEventListener('change', onChange)
   }, [viewMode, camera])
 
+  /**
+   * Freeze orbit while placing / dragging.
+   * Must sync via Zustand subscribe (same tick as setDragging) — waiting for
+   * React re-render lets OrbitControls rotate for the first pointer moves.
+   */
+  useEffect(() => {
+    const syncRotate = (busy: boolean) => {
+      const controls = controlsRef.current
+      if (!controls) return
+      controls.enableRotate = !busy
+    }
+
+    syncRotate(isCameraInteractBusy(useRoomStore.getState()))
+    return useRoomStore.subscribe((state) => {
+      syncRotate(isCameraInteractBusy(state))
+    })
+  }, [])
+
   return (
     <>
       <RightClickRotateOrOrbit />
@@ -244,7 +267,7 @@ export function SceneCameraControls() {
         dampingFactor={0.08}
         mouseButtons={
           interactBusy
-            ? { MIDDLE: MOUSE.DOLLY, RIGHT: MOUSE.ROTATE }
+            ? { MIDDLE: MOUSE.DOLLY }
             : {
                 LEFT: MOUSE.ROTATE,
                 MIDDLE: MOUSE.DOLLY,
@@ -257,7 +280,7 @@ export function SceneCameraControls() {
             ? { TWO: TOUCH.DOLLY_PAN }
             : { ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN }
         }
-        enableRotate
+        enableRotate={!interactBusy}
         enablePan
         enableZoom
         screenSpacePanning={viewMode === 'plan'}
