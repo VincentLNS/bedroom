@@ -70,6 +70,16 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Pièce : Chambre' })).toBeTruthy()
   }, 15000)
 
+  it('collapses and expands the top menu to free scene space', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Réduire' }))
+    expect(screen.queryByRole('heading', { name: 'Mini Déco' })).toBeNull()
+    expect(screen.getByRole('button', { name: /Mini Déco/ })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Mini Déco/ }))
+    expect(screen.getByRole('heading', { name: 'Mini Déco' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Réduire' })).toBeTruthy()
+  }, 15000)
+
   it('switches wall modes from the segmented control', () => {
     render(<App />)
     expect(useRoomStore.getState().wallMode).toBe('cut')

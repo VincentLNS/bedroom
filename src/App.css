@@ -34,6 +34,69 @@
   z-index: 2;
 }
 
+.top-bar--collapsed {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  padding: 0.4rem 0.75rem;
+  padding-top: calc(0.4rem + env(safe-area-inset-top, 0px));
+}
+
+.top-bar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.6rem;
+  padding: 0.25rem 0.75rem 0.25rem 0.35rem;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: rgba(255, 253, 247, 0.98);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+}
+
+.top-bar-chip:hover {
+  background: #fff;
+}
+
+.top-bar-chip:active {
+  transform: translateY(1px);
+}
+
+.top-bar-chip .brand-badge {
+  width: 1.7rem;
+  height: 1.7rem;
+  animation: none;
+}
+
+.top-bar-chip-label {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.top-bar-chip-hint {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+  margin-left: 0.15rem;
+}
+
+.top-bar-collapsed-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.top-bar-collapse {
+  flex: 0 0 auto;
+}
+
 .top-bar-row {
   display: flex;
   align-items: center;
@@ -1094,6 +1157,20 @@
     gap: 0.35rem;
     padding: 0.45rem 0.65rem 0.5rem;
     padding-top: calc(0.45rem + env(safe-area-inset-top, 0px));
+  }
+
+  .top-bar--collapsed {
+    padding: 0.3rem 0.5rem;
+    padding-top: calc(0.3rem + env(safe-area-inset-top, 0px));
+  }
+
+  .top-bar-chip {
+    min-height: 2.4rem;
+    padding: 0.2rem 0.65rem 0.2rem 0.3rem;
+  }
+
+  .top-bar-chip-label {
+    font-size: 0.98rem;
   }
 
   .top-bar--phone .top-bar-row {

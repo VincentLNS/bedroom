@@ -13,6 +13,16 @@ const WALL_OPTIONS: { mode: WallMode; label: string }[] = [
   { mode: 'full', label: 'Complets' },
 ]
 
+const TOPBAR_COLLAPSED_KEY = 'minideco-topbar-collapsed-v1'
+
+function readTopBarCollapsed(): boolean {
+  try {
+    return localStorage.getItem(TOPBAR_COLLAPSED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
 type TopBarProps = {
   onOpenShareQr: () => void
   onOpenGallery: () => void
@@ -57,6 +67,19 @@ export function TopBar({
   const phone = usePhoneLayout()
   const compact = coarse || phone
   const [moreOpen, setMoreOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(readTopBarCollapsed)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(TOPBAR_COLLAPSED_KEY, collapsed ? '1' : '0')
+    } catch {
+      /* ignore */
+    }
+  }, [collapsed])
+
+  useEffect(() => {
+    if (collapsed) setMoreOpen(false)
+  }, [collapsed])
 
   useEffect(() => {
     if (photoMode) return
@@ -322,15 +345,54 @@ export function TopBar({
 
   const topBarClass = [
     'top-bar',
+    collapsed ? 'top-bar--collapsed' : '',
     phone ? 'top-bar--phone' : '',
     compact && !phone ? 'top-bar--tablet' : '',
   ]
     .filter(Boolean)
     .join(' ')
 
+  if (collapsed) {
+    return (
+      <header className={topBarClass}>
+        <button
+          type="button"
+          className="top-bar-chip"
+          aria-expanded={false}
+          aria-controls="top-bar-body"
+          onClick={() => setCollapsed(false)}
+          title="Ouvrir le menu"
+        >
+          <span className="brand-badge" aria-hidden />
+          <span className="top-bar-chip-label">Mini Déco</span>
+          <span className="top-bar-chip-hint" aria-hidden>
+            ▾ Menu
+          </span>
+        </button>
+        <div className="top-bar-collapsed-actions">
+          {hasPending && (
+            <button
+              type="button"
+              className="top-bar-btn top-bar-btn--cancel"
+              onClick={() => useRoomStore.getState().cancelInteraction()}
+              title="Lâcher l’objet"
+            >
+              {phone ? '✕' : 'Annuler'}
+            </button>
+          )}
+          {importWarnings.length > 0 && (
+            <p className="top-bar-warning" role="status">
+              {importWarnings.join(' · ')}
+            </p>
+          )}
+        </div>
+      </header>
+    )
+  }
+
   return (
     <header className={topBarClass}>
-      <div className="top-bar-row">
+      <div className="top-bar-row" id="top-bar-body">
         <div className="top-bar-leading">
           <div className="brand-block">
             <div className="brand-mark">
@@ -503,6 +565,16 @@ export function TopBar({
           ) : (
             playTools
           )}
+          <button
+            type="button"
+            className="top-bar-btn top-bar-collapse"
+            aria-expanded={true}
+            aria-controls="top-bar-body"
+            onClick={() => setCollapsed(true)}
+            title="Réduire le menu pour voir plus la chambre"
+          >
+            {phone ? '▴' : 'Réduire'}
+          </button>
         </div>
       </div>
       <CoachTip activeOnly={phone} />
