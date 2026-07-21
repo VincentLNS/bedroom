@@ -73,7 +73,11 @@ describe('catalog', () => {
     expect(getCatalogItem('sandbox-garden')?.outdoor).toBe(true)
     expect(getCatalogItem('pillow-coral')?.nestable).toBe(true)
     expect(getCatalogItem('aquarium-sky')?.nestable).toBe(true)
-    expect(getCatalogItem('bathtub-blush')?.surfaceHeight).toBeTypeOf('number')
+    expect(getCatalogItem('bathtub-blush')?.footprint).toEqual([3, 1])
+    expect(getCatalogItem('shower-sky')?.footprint).toEqual([2, 1])
+    expect(getCatalogItem('sink-bathroom-mint')?.surfaceHeight).toBeTypeOf(
+      'number',
+    )
     expect(getCatalogItem('stove-gas-cream')).toBeDefined()
     expect(getCatalogItem('cabinet-upper-double')).toBeDefined()
     expect(getCatalogItem('table-cross-cloth')).toBeDefined()

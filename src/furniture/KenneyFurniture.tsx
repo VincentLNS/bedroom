@@ -17,7 +17,15 @@ import { CELL_SIZE } from '../room/constants'
 
 const SELECT_EMISSIVE = new Color('#fff4dc')
 
-type MatRole = 'metal' | 'wood' | 'fabric' | 'glass' | 'lamp' | 'plant' | 'plastic'
+type MatRole =
+  | 'metal'
+  | 'wood'
+  | 'fabric'
+  | 'glass'
+  | 'lamp'
+  | 'plant'
+  | 'plastic'
+  | 'ceramic'
 
 function classifyMat(name: string): MatRole {
   const n = name.toLowerCase()
@@ -33,13 +41,24 @@ function classifyMat(name: string): MatRole {
     n.includes('cushion') ||
     n.includes('pillow') ||
     n.includes('rug')
-  )
+  ) {
+    // Kenney reuses "carpetWhite" for bathroom enamel / porcelain.
+    if (n.includes('carpetwhite') || n.includes('carpet_white')) return 'ceramic'
     return 'fabric'
+  }
   if (n.includes('wood') || n.includes('oak') || n.includes('plank')) return 'wood'
+  if (
+    n.includes('ceramic') ||
+    n.includes('porcelain') ||
+    n === '_defaultmat' ||
+    n.includes('defaultmat')
+  ) {
+    return 'ceramic'
+  }
   return 'plastic'
 }
 
-/** Soft goods get tint; wood/metal/glass keep more of Kenney’s own palette. */
+/** Soft goods get tint; ceramics/chrome keep Kenney’s own palette. */
 function tintStrength(role: MatRole): number {
   switch (role) {
     case 'fabric':
@@ -52,9 +71,11 @@ function tintStrength(role: MatRole): number {
       return 0.2
     case 'lamp':
       return 0.15
+    case 'ceramic':
+      return 0.1
     case 'metal':
     case 'glass':
-      return 0.08
+      return 0.05
   }
 }
 
@@ -171,8 +192,12 @@ function toStandardMaterial(
         roughness = 0.94
         break
       case 'glass':
-        metalness = 0.4
-        roughness = 0.1
+        metalness = 0.55
+        roughness = 0.08
+        break
+      case 'ceramic':
+        metalness = 0.12
+        roughness = 0.32
         break
       case 'lamp':
         metalness = 0.05
@@ -189,13 +214,14 @@ function toStandardMaterial(
   }
 
   // Punch up dull greys so furniture never looks colourless
+  // (skip ceramics — keep porcelain white / enamel).
   const hsl = { h: 0, s: 0, l: 0 }
   color.getHSL(hsl)
-  if (hsl.s < 0.08 && hsl.l > 0.2 && hsl.l < 0.92) {
+  if (role !== 'ceramic' && hsl.s < 0.08 && hsl.l > 0.2 && hsl.l < 0.92) {
     if (role === 'metal') color.setHSL(0.58, 0.08, hsl.l)
     else if (role === 'plant') color.setHSL(0.32, 0.45, Math.min(0.55, hsl.l))
     else color.setHSL(0.08, 0.38, hsl.l)
-  } else if (hsl.s > 0.05) {
+  } else if (role !== 'ceramic' && hsl.s > 0.05) {
     const boost = role === 'fabric' || role === 'plant' ? 1.35 : 1.22
     color.setHSL(hsl.h, Math.min(1, hsl.s * boost), hsl.l)
   }
@@ -209,6 +235,9 @@ function toStandardMaterial(
     roughness,
     metalness,
     name: material.name,
+    ...(role === 'glass'
+      ? { transparent: true, opacity: 0.55, depthWrite: false }
+      : {}),
   })
 }
 
@@ -228,7 +257,7 @@ function fitToFootprint(
   const targetW = footprint[0] * CELL_SIZE * 0.92
   const targetD = footprint[1] * CELL_SIZE * 0.92
   const scaleXY = Math.min(targetW / size.x, targetD / size.z)
-  const MAX_FURNITURE_H = 1.55
+  const MAX_FURNITURE_H = 1.85
   const scaleH = size.y > 1e-6 ? MAX_FURNITURE_H / size.y : scaleXY
   const scale = Math.min(scaleXY, scaleH)
   object.scale.setScalar(scale)
