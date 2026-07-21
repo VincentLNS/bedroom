@@ -62,10 +62,9 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Complets' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Grille' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Recentrer' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Chambre vide' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Modèle Louise' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Sauver' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Ouvrir' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Lien' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Modèles' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Parents' })).toBeTruthy()
     expect(screen.getByRole('navigation', { name: 'Catégories du catalogue' })).toBeTruthy()
     expect(screen.getByRole('button', { name: /Placer Lit Louise/ })).toBeTruthy()
   })
@@ -181,7 +180,8 @@ describe('App', () => {
     expect(useRoomStore.getState().mode).toBe('orbit')
   })
 
-  it('loads empty and Louise presets after confirm', () => {
+  it('opens parent space then loads Louise preset', async () => {
+    localStorage.setItem('minideco-parent-pin-v1', '1234')
     useRoomStore.setState({
       items: [
         {
@@ -196,28 +196,37 @@ describe('App', () => {
       mode: 'place',
       selectedId: 'a',
     })
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
 
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'Chambre vide' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Parents' }))
 
-    expect(confirmSpy).toHaveBeenCalled()
-    let state = useRoomStore.getState()
-    expect(state.items).toEqual([])
-    expect(state.pendingCatalogId).toBeNull()
-    expect(state.mode).toBe('orbit')
-    expect(state.selectedId).toBeNull()
+    expect(await screen.findByRole('dialog', { name: 'Code parent' })).toBeTruthy()
+    for (const digit of ['1', '2', '3', '4']) {
+      fireEvent.click(screen.getByRole('button', { name: digit }))
+    }
 
-    fireEvent.click(screen.getByRole('button', { name: 'Modèle Louise' }))
-    state = useRoomStore.getState()
-    expect(state.items.length).toBeGreaterThanOrEqual(12)
-    expect(state.items.some((item) => item.catalogId === 'bed-louise')).toBe(true)
-    expect(state.pendingCatalogId).toBeNull()
-    expect(state.selectedId).toBeNull()
-    confirmSpy.mockRestore()
+    expect(
+      await screen.findByRole('dialog', { name: 'Espace parent' }),
+    ).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chambre Louise' }))
+    expect(
+      await screen.findByRole('dialog', { name: 'Modèle Louise ?' }),
+    ).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Charger' }))
+
+    await vi.waitFor(() => {
+      const state = useRoomStore.getState()
+      expect(state.items.length).toBeGreaterThanOrEqual(12)
+      expect(state.items.some((item) => item.catalogId === 'bed-louise')).toBe(
+        true,
+      )
+      expect(state.pendingCatalogId).toBeNull()
+      expect(state.selectedId).toBeNull()
+    })
   })
 
-  it('shows action dock when an item is selected', () => {
+  it('shows action dock when an item is selected', async () => {
     useRoomStore.setState({
       items: [
         {
@@ -235,11 +244,14 @@ describe('App', () => {
     expect(screen.getByRole('toolbar', { name: 'Actions rapides' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Tourner/ }))
     expect(useRoomStore.getState().items[0].rot).toBe(90)
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     fireEvent.click(screen.getByRole('button', { name: /Enlever/ }))
-    expect(confirmSpy).toHaveBeenCalled()
-    expect(useRoomStore.getState().items).toHaveLength(0)
-    expect(useRoomStore.getState().selectedId).toBeNull()
-    confirmSpy.mockRestore()
+    expect(
+      await screen.findByRole('dialog', { name: 'Enlever ce meuble ?' }),
+    ).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Enlever' }))
+    await vi.waitFor(() => {
+      expect(useRoomStore.getState().items).toHaveLength(0)
+      expect(useRoomStore.getState().selectedId).toBeNull()
+    })
   })
 })

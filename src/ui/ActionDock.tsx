@@ -1,4 +1,5 @@
 import { useRoomStore } from '../store/roomStore'
+import { askConfirm } from './dialogStore'
 
 /**
  * Thumb-zone dock: rotate / cancel / remove / undo / duplicate / lock.
@@ -27,14 +28,14 @@ export function ActionDock() {
   if (photoMode) return null
   if (!placing && !editing && !canUndo && !canRedo) return null
 
-  const onDelete = () => {
-    if (
-      !window.confirm(
-        'Enlever ce meuble ? Tu pourras annuler avec ↩ Undo.',
-      )
-    ) {
-      return
-    }
+  const onDelete = async () => {
+    const ok = await askConfirm({
+      title: 'Enlever ce meuble ?',
+      message: 'Tu pourras annuler avec ↩ Undo.',
+      confirmLabel: 'Enlever',
+      danger: true,
+    })
+    if (!ok) return
     deleteSelected()
   }
 
@@ -108,7 +109,7 @@ export function ActionDock() {
           <button
             type="button"
             className="action-dock-btn action-dock-btn--danger"
-            onClick={onDelete}
+            onClick={() => void onDelete()}
             disabled={locked}
             title="Enlever le meuble"
             aria-label="Enlever le meuble"

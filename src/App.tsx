@@ -18,7 +18,9 @@ import type { ChallengeId } from './challenges/challenges'
 import { ActionDock } from './ui/ActionDock'
 import { CataloguePanel } from './ui/CataloguePanel'
 import { CoPlayModal } from './ui/CoPlayModal'
+import { DialogHost } from './ui/DialogHost'
 import { GalleryModal } from './ui/GalleryModal'
+import { ParentDrawer } from './ui/ParentDrawer'
 import { SceneHud } from './ui/CoachTip'
 import { GestureCoach } from './ui/GestureCoach'
 import { LoadingSplash } from './ui/LoadingSplash'
@@ -92,6 +94,7 @@ export default function App() {
   const [shareQrOpen, setShareQrOpen] = useState(false)
   const [coPlayOpen, setCoPlayOpen] = useState(false)
   const [galleryOpen, setGalleryOpen] = useState(false)
+  const [parentOpen, setParentOpen] = useState(false)
 
   useEffect(() => {
     const prefs = loadPrefs()
@@ -210,6 +213,10 @@ export default function App() {
         setGalleryOpen(false)
         return
       }
+      if (parentOpen) {
+        setParentOpen(false)
+        return
+      }
       const store = useRoomStore.getState()
       if (store.photoMode) {
         store.setPhotoMode(false)
@@ -220,7 +227,7 @@ export default function App() {
 
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
-  }, [shareQrOpen, coPlayOpen, galleryOpen])
+  }, [shareQrOpen, coPlayOpen, galleryOpen, parentOpen])
 
   const appClass = [
     'app',
@@ -236,8 +243,8 @@ export default function App() {
       <LoadingSplash ready={sceneReady} />
       <TopBar
         onOpenShareQr={() => setShareQrOpen(true)}
-        onOpenCoPlay={() => setCoPlayOpen(true)}
         onOpenGallery={() => setGalleryOpen(true)}
+        onOpenParent={() => setParentOpen(true)}
       />
       <div className="workspace">
         {!photoMode && <CataloguePanel />}
@@ -255,9 +262,15 @@ export default function App() {
       </div>
       {!photoMode && <GestureCoach />}
       <SoundBridge />
+      <DialogHost />
       <ShareQrModal open={shareQrOpen} onClose={() => setShareQrOpen(false)} />
       <CoPlayModal open={coPlayOpen} onClose={() => setCoPlayOpen(false)} />
       <GalleryModal open={galleryOpen} onClose={() => setGalleryOpen(false)} />
+      <ParentDrawer
+        open={parentOpen}
+        onClose={() => setParentOpen(false)}
+        onOpenCoPlay={() => setCoPlayOpen(true)}
+      />
       <Analytics />
     </div>
   )

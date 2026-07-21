@@ -4,6 +4,7 @@ import { buildShareUrl, copyText } from '../persist/shareLink'
 import { createHallLayout } from '../presets/hall'
 import { createLouiseLayout } from '../presets/louise'
 import { createSalonLayout } from '../presets/salon'
+import { askConfirm, askPrompt } from './dialogStore'
 import { useRoomStore } from '../store/roomStore'
 import type { HouseRoomId } from '../house/rooms'
 
@@ -84,24 +85,27 @@ export function GalleryModal({ open, onClose }: Props) {
 
   if (!open) return null
 
-  const openEntry = (entry: GalleryEntry) => {
-    if (
-      !window.confirm(
-        `Ouvrir « ${entry.title} » dans la pièce ${entry.room} ? Les meubles de cette pièce seront remplacés.`,
-      )
-    ) {
-      return
-    }
+  const openEntry = async (entry: GalleryEntry) => {
+    const ok = await askConfirm({
+      title: `Ouvrir « ${entry.title} » ?`,
+      message: `Dans la pièce ${entry.room}. Les meubles de cette pièce seront remplacés.`,
+      confirmLabel: 'Ouvrir',
+    })
+    if (!ok) return
     setActiveRoom(entry.room)
     replaceLayout(entry.build())
-    flashToast(`Galerie : ${entry.title}`, 'ok')
+    flashToast(`Modèle : ${entry.title}`, 'ok')
     onClose()
   }
 
   const publishMine = async () => {
     const title =
-      window.prompt('Titre pour la galerie ?', 'Ma super chambre')?.trim() ||
-      'Ma chambre'
+      (await askPrompt({
+        title: 'Titre du souvenir',
+        message: 'Reste sur cet appareil (pas une galerie mondiale).',
+        defaultValue: 'Ma super chambre',
+        confirmLabel: 'Enregistrer',
+      })) || 'Ma chambre'
     try {
       const url = await buildShareUrl(serializeLayout(items))
       const entry: Published = {
@@ -115,7 +119,7 @@ export function GalleryModal({ open, onClose }: Props) {
       setPublished(next)
       await copyText(url)
       markChallengeDone('share-room')
-      flashToast('Publié ! Lien copié', 'ok')
+      flashToast('Souvenir enregistré · lien copié', 'ok')
     } catch {
       flashToast('Publication impossible (lien trop long)', 'error')
     }
@@ -126,15 +130,15 @@ export function GalleryModal({ open, onClose }: Props) {
       <div
         className="magic-modal magic-modal--wide"
         role="dialog"
-        aria-label="Galerie"
+        aria-label="Modèles"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="magic-modal-title">Chambres du monde</h2>
+        <h2 className="magic-modal-title">Modèles & souvenirs</h2>
         <p className="magic-modal-hint">
-          Inspire-toi des modèles, ou publie la pièce active.
+          Inspiration Mini Déco, et tes souvenirs enregistrés sur cet appareil.
         </p>
 
-        <h3 className="gallery-section-title">À la une</h3>
+        <h3 className="gallery-section-title">Modèles</h3>
         <ul className="gallery-list">
           {featured.map((entry) => (
             <li key={entry.id} className="gallery-card">
@@ -147,7 +151,7 @@ export function GalleryModal({ open, onClose }: Props) {
               <button
                 type="button"
                 className="top-bar-btn top-bar-btn--primary"
-                onClick={() => openEntry(entry)}
+                onClick={() => void openEntry(entry)}
               >
                 Ouvrir
               </button>
@@ -155,9 +159,9 @@ export function GalleryModal({ open, onClose }: Props) {
           ))}
         </ul>
 
-        <h3 className="gallery-section-title">Mes publications</h3>
+        <h3 className="gallery-section-title">Sur cet appareil</h3>
         {published.length === 0 ? (
-          <p className="magic-modal-hint">Pas encore de publication sur cet appareil.</p>
+          <p className="magic-modal-hint">Pas encore de souvenir enregistré ici.</p>
         ) : (
           <ul className="gallery-list">
             {published.map((p) => (
@@ -192,7 +196,7 @@ export function GalleryModal({ open, onClose }: Props) {
             className="top-bar-btn top-bar-btn--primary"
             onClick={() => void publishMine()}
           >
-            Publier ma pièce
+            Garder ma pièce
           </button>
         </div>
       </div>
