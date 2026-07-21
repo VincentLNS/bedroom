@@ -62,7 +62,6 @@ export function DollhouseMesh({
   const m = { opacity, selected }
   const bodyW = w * 0.88
   const bodyD = d * 0.78
-  const wall = 0.05
   const floorH = 0.34
   const floors = 3
   const bodyH = floorH * floors

@@ -188,7 +188,7 @@ export function PlushStitch({
         </mesh>
       ))}
       {/* Back spines */}
-      {[-0.04, 0.02, 0.08].map((z, i) => (
+      {[-0.04, 0.02, 0.08].map((_, i) => (
         <mesh
           key={i}
           position={[0, 0.22 + i * 0.04, -0.1]}

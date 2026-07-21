@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Color, type Mesh } from 'three'
+import { type Mesh } from 'three'
 import { cellToWorld } from '../placement'
 import { useRoomStore } from '../store/roomStore'
 
@@ -26,8 +26,8 @@ export function SnapPulse() {
     }
     const scale = 0.35 + t * 1.4
     mesh.scale.set(scale, scale, scale)
-    const mat = mesh.material as { opacity: number; color: Color }
-    mat.opacity = 0.55 * (1 - t)
+    const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material
+    if (mat && 'opacity' in mat) mat.opacity = 0.55 * (1 - t)
   })
 
   if (!pulse) return null

@@ -11,7 +11,6 @@ import {
   footprintCells,
 } from '../placement'
 import { useRoomStore, type Rotation } from '../store/roomStore'
-import { PrimitiveFurniture } from './PrimitiveFurniture'
 import { CatalogItemMesh } from './CatalogItemMesh'
 
 export function footprintWorldCenter(
