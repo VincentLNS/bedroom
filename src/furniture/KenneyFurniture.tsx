@@ -79,10 +79,8 @@ export function KenneyFurniture({
 }) {
   const base = `/models/kenney/${model}`
 
-  const materials = useLoader(MTLLoader, `${base}.mtl`, (loader) => {
-    loader.setPath('/models/kenney/')
-    loader.setResourcePath('/models/kenney/')
-  })
+  // Pass absolute URLs only — do NOT setPath() (Three would prepend and double the path).
+  const materials = useLoader(MTLLoader, `${base}.mtl`)
   materials.preload()
 
   const object = useLoader(OBJLoader, `${base}.obj`, (loader) => {
