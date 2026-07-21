@@ -7,6 +7,7 @@ import { WallFadeDriver } from '../room/WallFade'
 import { SceneLights } from '../room/lighting'
 import { GhostPreview } from '../furniture/GhostPreview'
 import { PlacedFurniture } from '../furniture/PlacedFurniture'
+import { RoomPortals } from '../furniture/RoomPortals'
 import { SnapPulse } from '../furniture/SnapPulse'
 import { useRoomStore } from '../store/roomStore'
 import { PlacementController } from './PlacementController'
@@ -41,6 +42,7 @@ export function BedroomScene({ onReady }: Props) {
       <Room />
       {showGrid && <FloorGrid />}
       <PlacedFurniture />
+      <RoomPortals />
       <GhostPreview />
       <SnapPulse />
       <PlacementController />

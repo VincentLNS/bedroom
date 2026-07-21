@@ -6,6 +6,11 @@ import {
 } from '../challenges/challenges'
 import { getCatalogItem } from '../catalog'
 import {
+  cloneHouseRooms,
+  emptyHouseRooms,
+  type HouseRoomId,
+} from '../house/rooms'
+import {
   canPlace,
   cellsContainedIn,
   footprintCells,
@@ -90,6 +95,16 @@ type RoomState = {
   favorites: string[]
   recents: string[]
   challengesDone: ChallengeId[]
+  /** Whole house — each wing keeps its furniture. */
+  activeRoom: HouseRoomId
+  rooms: Record<HouseRoomId, PlacedItem[]>
+  /** Ignore local→peer echo while applying a remote snapshot. */
+  applyingRemote: boolean
+  setActiveRoom: (room: HouseRoomId) => void
+  replaceHouse: (
+    rooms: Record<HouseRoomId, PlacedItem[]>,
+    activeRoom?: HouseRoomId,
+  ) => void
   place: (catalogId: string, cx: number, cz: number, rot: Rotation) => boolean
   move: (instanceId: string, cx: number, cz: number) => boolean
   rotateSelected: () => boolean
@@ -273,8 +288,58 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   favorites: [],
   recents: [],
   challengesDone: [],
+  activeRoom: 'bedroom',
+  rooms: emptyHouseRooms(),
+  applyingRemote: false,
 
   getOccupied: () => toFloorOccupied(get().items),
+
+  setActiveRoom: (room) => {
+    const state = get()
+    if (room === state.activeRoom) return
+    const rooms = {
+      ...state.rooms,
+      [state.activeRoom]: cloneItems(state.items),
+    }
+    set({
+      rooms,
+      activeRoom: room,
+      items: cloneItems(rooms[room]),
+      selectedId: null,
+      pendingCatalogId: null,
+      mode: 'orbit',
+      dragging: false,
+      undoStack: [],
+      redoStack: [],
+    })
+    get().flashToast(
+      room === 'bedroom'
+        ? 'Chambre'
+        : room === 'hall'
+          ? 'Couloir'
+          : 'Salon',
+      'info',
+    )
+    get().requestCameraHome()
+    get().refreshChallenges()
+  },
+
+  replaceHouse: (rooms, activeRoom = 'bedroom') => {
+    const next = cloneHouseRooms(rooms)
+    set({
+      rooms: next,
+      activeRoom,
+      items: cloneItems(next[activeRoom]),
+      selectedId: null,
+      pendingCatalogId: null,
+      mode: 'orbit',
+      dragging: false,
+      undoStack: [],
+      redoStack: [],
+      importWarnings: [],
+    })
+    get().refreshChallenges()
+  },
 
   flashToast: (message, tone = 'info') =>
     set({ toast: { message, tone, id: Date.now() } }),
@@ -672,3 +737,16 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   requestCameraHome: () =>
     set((state) => ({ cameraHomeTick: state.cameraHomeTick + 1 })),
 }))
+
+/** Keep house wing inventory in sync with the active room's items. */
+useRoomStore.subscribe((state, prev) => {
+  if (state.applyingRemote) return
+  if (state.items === prev.items) return
+  if (state.rooms[state.activeRoom] === state.items) return
+  useRoomStore.setState({
+    rooms: {
+      ...state.rooms,
+      [state.activeRoom]: state.items,
+    },
+  })
+})

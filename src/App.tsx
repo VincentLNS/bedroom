@@ -11,16 +11,20 @@ import {
   decodeShareToken,
   readShareTokenFromLocation,
 } from './persist/shareLink'
-import { createLouiseLayout } from './presets/louise'
+import { emptyHouseRooms } from './house/rooms'
 import { useRoomStore, type ShadowQuality } from './store/roomStore'
 import type { ChallengeId } from './challenges/challenges'
 import { ActionDock } from './ui/ActionDock'
 import { CataloguePanel } from './ui/CataloguePanel'
+import { CoPlayModal } from './ui/CoPlayModal'
+import { GalleryModal } from './ui/GalleryModal'
 import { SceneHud } from './ui/CoachTip'
 import { GestureCoach } from './ui/GestureCoach'
 import { LoadingSplash } from './ui/LoadingSplash'
 import { PhotoModeOverlay } from './ui/PhotoMode'
+import { RoomSwitcher } from './ui/RoomSwitcher'
 import { RotateDial } from './ui/RotateDial'
+import { ShareQrModal } from './ui/ShareQrModal'
 import { Toast } from './ui/Toast'
 import { TopBar } from './ui/TopBar'
 import './App.css'
@@ -75,6 +79,9 @@ export default function App() {
   const highContrast = useRoomStore((s) => s.highContrast)
   const flashToast = useRoomStore((s) => s.flashToast)
   const [sceneReady, setSceneReady] = useState(false)
+  const [shareQrOpen, setShareQrOpen] = useState(false)
+  const [coPlayOpen, setCoPlayOpen] = useState(false)
+  const [galleryOpen, setGalleryOpen] = useState(false)
 
   useEffect(() => {
     const prefs = loadPrefs()
@@ -89,12 +96,15 @@ export default function App() {
 
     let cancelled = false
     const boot = async () => {
+      const house = emptyHouseRooms()
+
       const token = readShareTokenFromLocation()
       if (token) {
         const decoded = await decodeShareToken(token)
         if (cancelled) return
         if (decoded.ok) {
-          useRoomStore.getState().replaceLayout(fileToPlacedItems(decoded.file))
+          house.bedroom = fileToPlacedItems(decoded.file)
+          useRoomStore.getState().replaceHouse(house, 'bedroom')
           clearShareParamsFromUrl()
           flashToast('Chambre ouverte depuis un lien !', 'ok')
           return
@@ -105,9 +115,10 @@ export default function App() {
 
       const saved = loadFromLocalStorage()
       if (saved) {
-        useRoomStore.getState().replaceLayout(fileToPlacedItems(saved))
+        house.bedroom = fileToPlacedItems(saved)
+        useRoomStore.getState().replaceHouse(house, 'bedroom')
       } else if (useRoomStore.getState().items.length === 0) {
-        useRoomStore.getState().replaceLayout(createLouiseLayout())
+        useRoomStore.getState().replaceHouse(house, 'bedroom')
       }
     }
     void boot()
@@ -160,6 +171,18 @@ export default function App() {
       }
 
       event.preventDefault()
+      if (shareQrOpen) {
+        setShareQrOpen(false)
+        return
+      }
+      if (coPlayOpen) {
+        setCoPlayOpen(false)
+        return
+      }
+      if (galleryOpen) {
+        setGalleryOpen(false)
+        return
+      }
       const store = useRoomStore.getState()
       if (store.photoMode) {
         store.setPhotoMode(false)
@@ -170,7 +193,7 @@ export default function App() {
 
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
-  }, [])
+  }, [shareQrOpen, coPlayOpen, galleryOpen])
 
   const appClass = [
     'app',
@@ -184,7 +207,11 @@ export default function App() {
   return (
     <div className={appClass}>
       <LoadingSplash ready={sceneReady} />
-      <TopBar />
+      <TopBar
+        onOpenShareQr={() => setShareQrOpen(true)}
+        onOpenCoPlay={() => setCoPlayOpen(true)}
+        onOpenGallery={() => setGalleryOpen(true)}
+      />
       <div className="workspace">
         {!photoMode && <CataloguePanel />}
         <main className="scene-host">
@@ -192,6 +219,7 @@ export default function App() {
           <Suspense fallback={null}>
             <BedroomScene onReady={() => setSceneReady(true)} />
           </Suspense>
+          <RoomSwitcher />
           <ActionDock />
           <RotateDial />
           <Toast />
@@ -199,6 +227,9 @@ export default function App() {
         </main>
       </div>
       {!photoMode && <GestureCoach />}
+      <ShareQrModal open={shareQrOpen} onClose={() => setShareQrOpen(false)} />
+      <CoPlayModal open={coPlayOpen} onClose={() => setCoPlayOpen(false)} />
+      <GalleryModal open={galleryOpen} onClose={() => setGalleryOpen(false)} />
       <Analytics />
     </div>
   )

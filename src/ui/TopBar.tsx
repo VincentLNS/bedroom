@@ -11,7 +11,6 @@ import {
   loadCloudSave,
   saveToCloud,
 } from '../persist/cloudSaves'
-import { buildShareUrl, shareOrCopyUrl } from '../persist/shareLink'
 import { createLouiseLayout } from '../presets/louise'
 import { createSalonLayout } from '../presets/salon'
 import { useRoomStore, type WallMode } from '../store/roomStore'
@@ -28,7 +27,17 @@ const WALL_OPTIONS: { mode: WallMode; label: string }[] = [
   { mode: 'full', label: 'Complets' },
 ]
 
-export function TopBar() {
+type TopBarProps = {
+  onOpenShareQr: () => void
+  onOpenCoPlay: () => void
+  onOpenGallery: () => void
+}
+
+export function TopBar({
+  onOpenShareQr,
+  onOpenCoPlay,
+  onOpenGallery,
+}: TopBarProps) {
   const clearRoom = useRoomStore((s) => s.clearRoom)
   const clearPending = useRoomStore((s) => s.clearPending)
   const select = useRoomStore((s) => s.select)
@@ -58,7 +67,6 @@ export function TopBar() {
   const highContrast = useRoomStore((s) => s.highContrast)
   const setHighContrast = useRoomStore((s) => s.setHighContrast)
   const flashToast = useRoomStore((s) => s.flashToast)
-  const markChallengeDone = useRoomStore((s) => s.markChallengeDone)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const coarse = useCoarsePointer()
   const [moreOpen, setMoreOpen] = useState(false)
@@ -173,22 +181,8 @@ export function TopBar() {
     }
   }
 
-  const handleShareLink = async () => {
-    try {
-      const url = await buildShareUrl(serializeLayout(items))
-      const result = await shareOrCopyUrl(url)
-      if (result === 'shared' || result === 'copied') {
-        markChallengeDone('share-room')
-        flashToast(
-          result === 'shared' ? 'Lien partagé !' : 'Lien copié !',
-          'ok',
-        )
-      } else {
-        flashToast('Impossible de partager le lien', 'error')
-      }
-    } catch {
-      flashToast('Lien trop long — retire des meubles', 'error')
-    }
+  const handleShareLink = () => {
+    onOpenShareQr()
     setMoreOpen(false)
   }
 
@@ -369,10 +363,32 @@ export function TopBar() {
       <button
         type="button"
         className="top-bar-btn top-bar-btn--primary"
-        onClick={() => void handleShareLink()}
-        title="Copie ou envoie un lien vers ta chambre"
+        onClick={handleShareLink}
+        title="QR code et lien vers ta chambre"
       >
         Lien
+      </button>
+      <button
+        type="button"
+        className="top-bar-btn"
+        onClick={() => {
+          onOpenCoPlay()
+          setMoreOpen(false)
+        }}
+        title="Décorer ensemble en direct"
+      >
+        Co-déco
+      </button>
+      <button
+        type="button"
+        className="top-bar-btn"
+        onClick={() => {
+          onOpenGallery()
+          setMoreOpen(false)
+        }}
+        title="Galerie de chambres"
+      >
+        Galerie
       </button>
       <button type="button" className="top-bar-btn" onClick={handleCloudSave}>
         Cloud ↓
