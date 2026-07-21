@@ -4,6 +4,7 @@ import { OrbitControls } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { useRoomStore } from '../store/roomStore'
+import { isPhoneViewport } from '../ui/usePhoneLayout'
 
 const CLICK_SLOP_PX = 6
 const TWO_FINGER_TAP_MS = 320
@@ -11,7 +12,11 @@ const TWO_FINGER_TAP_SLOP_PX = 28
 
 /** Default dollhouse hero angle (¾ high). */
 export const HOME_CAMERA_POS: [number, number, number] = [3.6, 3.8, 5.2]
+/** Closer + slightly higher for portrait phones (short viewport). */
+export const PHONE_HOME_CAMERA_POS: [number, number, number] = [3.15, 4.15, 4.55]
 export const HOME_TARGET: [number, number, number] = [0, 0.55, 0]
+export const HOME_FOV = 40
+export const PHONE_HOME_FOV = 50
 /** Top-down plan peek — slightly offset so OrbitControls stays stable. */
 const PLAN_CAMERA_POS: [number, number, number] = [0.01, 9.2, 0.01]
 const PLAN_TARGET: [number, number, number] = [0, 0, 0]
@@ -148,12 +153,15 @@ function applyHomeView(
   controls: OrbitControlsImpl,
   camera: PerspectiveCamera,
 ) {
-  camera.position.set(...HOME_CAMERA_POS)
+  const phone = isPhoneViewport()
+  camera.position.set(...(phone ? PHONE_HOME_CAMERA_POS : HOME_CAMERA_POS))
+  camera.fov = phone ? PHONE_HOME_FOV : HOME_FOV
+  camera.updateProjectionMatrix()
   controls.target.set(...HOME_TARGET)
   controls.minPolarAngle = 0.55
   controls.maxPolarAngle = Math.PI / 2.15
-  controls.minDistance = 4
-  controls.maxDistance = 11
+  controls.minDistance = phone ? 3.4 : 4
+  controls.maxDistance = phone ? 10 : 11
   controls.enableRotate = true
   controls.update()
 }

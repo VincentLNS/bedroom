@@ -9,11 +9,17 @@ export function resolveShadowQuality(
   return detectDeviceTier() === 'weak' ? 'low' : 'high'
 }
 
-/** Full Kenney OBJ only on high quality — elsewhere use tinted placeholders. */
-export function useLiteFurniture(
-  quality: ShadowQuality,
-): boolean {
-  return resolveShadowQuality(quality) !== 'high'
+/**
+ * Extreme lite: tinted boxes instead of Kenney OBJ.
+ * Only when shadows are fully off — Auto/low still load Kenney (lighter shadows).
+ */
+export function useLiteFurniture(quality: ShadowQuality): boolean {
+  return resolveShadowQuality(quality) === 'off'
+}
+
+/** Cast/receive shadows on furniture meshes (high only — Auto→high on strong devices). */
+export function furnitureCastShadow(quality: ShadowQuality): boolean {
+  return resolveShadowQuality(quality) === 'high'
 }
 
 export function nextShadowQuality(q: ShadowQuality): ShadowQuality {

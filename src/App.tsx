@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Analytics } from '@vercel/analytics/react'
 import {
-  fileToPlacedItems,
   houseFileToRooms,
   loadHouseFromLocalStorage,
   saveHouseToLocalStorage,
@@ -31,6 +30,7 @@ import { ShareQrModal } from './ui/ShareQrModal'
 import { SoundBridge } from './ui/SoundBridge'
 import { Toast } from './ui/Toast'
 import { TopBar } from './ui/TopBar'
+import { usePhoneLayout } from './ui/usePhoneLayout'
 import './App.css'
 
 const BedroomScene = lazy(() =>
@@ -90,6 +90,7 @@ export default function App() {
   const bigFingers = useRoomStore((s) => s.bigFingers)
   const highContrast = useRoomStore((s) => s.highContrast)
   const flashToast = useRoomStore((s) => s.flashToast)
+  const phone = usePhoneLayout()
   const [sceneReady, setSceneReady] = useState(false)
   const [shareQrOpen, setShareQrOpen] = useState(false)
   const [coPlayOpen, setCoPlayOpen] = useState(false)
@@ -120,10 +121,20 @@ export default function App() {
         const decoded = await decodeShareToken(token)
         if (cancelled) return
         if (decoded.ok) {
-          house.bedroom = fileToPlacedItems(decoded.file)
-          useRoomStore.getState().replaceHouse(house, 'bedroom')
+          const rooms = houseFileToRooms(decoded.file)
+          useRoomStore
+            .getState()
+            .replaceHouse(rooms, decoded.file.activeRoom)
+          if (decoded.file.title) {
+            useRoomStore.getState().setRoomTitle(decoded.file.title)
+          }
           clearShareParamsFromUrl()
-          flashToast('Chambre ouverte depuis un lien !', 'ok')
+          flashToast(
+            decoded.kind === 'house'
+              ? 'Maison ouverte depuis un lien !'
+              : 'Chambre ouverte depuis un lien !',
+            'ok',
+          )
           return
         }
         flashToast(decoded.error, 'error')
@@ -234,6 +245,7 @@ export default function App() {
     bigFingers ? 'app--big-fingers' : '',
     highContrast ? 'app--high-contrast' : '',
     photoMode ? 'app--photo' : '',
+    phone ? 'app--phone' : '',
   ]
     .filter(Boolean)
     .join(' ')

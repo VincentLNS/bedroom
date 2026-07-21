@@ -18,12 +18,14 @@ const TIPS = [
   'Les animaux aiment le jardin : pose-les sur la pelouse autour de la chambre !',
 ]
 
-export function CoachTip() {
+export function CoachTip({ activeOnly = false }: { activeOnly?: boolean }) {
   const mode = useRoomStore((s) => s.mode)
   const pendingCatalogId = useRoomStore((s) => s.pendingCatalogId)
   const selectedId = useRoomStore((s) => s.selectedId)
   const items = useRoomStore((s) => s.items)
   const viewMode = useRoomStore((s) => s.viewMode)
+
+  const active = pendingCatalogId != null || selectedId != null
 
   const tip = useMemo(() => {
     if (pendingCatalogId) {
@@ -51,8 +53,14 @@ export function CoachTip() {
     return TIPS[items.length % TIPS.length]
   }, [mode, pendingCatalogId, selectedId, items.length, viewMode])
 
+  if (activeOnly && !active) return null
+
   return (
-    <div className="coach-tip" role="status" aria-live="polite">
+    <div
+      className={activeOnly && active ? 'coach-tip coach-tip--active' : 'coach-tip'}
+      role="status"
+      aria-live="polite"
+    >
       <span className="coach-tip-label">Astuce déco</span>
       <p className="coach-tip-text">{tip}</p>
     </div>

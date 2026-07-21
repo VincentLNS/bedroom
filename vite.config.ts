@@ -8,7 +8,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['vite.svg'],
+      includeAssets: [
+        'icons/minideco.svg',
+        'icons/apple-touch-icon.png',
+        'icons/icon-192.png',
+        'icons/icon-512.png',
+      ],
       manifest: {
         name: 'Mini Déco — Chambre de Louise',
         short_name: 'Mini Déco',
@@ -21,7 +26,19 @@ export default defineConfig({
         lang: 'fr',
         icons: [
           {
-            src: '/vite.svg',
+            src: '/icons/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/minideco.svg',
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any maskable',

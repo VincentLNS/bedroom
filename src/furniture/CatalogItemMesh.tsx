@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import type { CatalogItem } from '../catalog'
 import { CELL_SIZE } from '../room/constants'
-import { useLiteFurniture } from '../perf/quality'
+import { furnitureCastShadow, useLiteFurniture } from '../perf/quality'
 import { useRoomStore } from '../store/roomStore'
 import { KenneyFurniture } from './KenneyFurniture'
 import { MeshErrorBoundary } from './MeshErrorBoundary'
@@ -69,7 +69,7 @@ export function CatalogItemMesh({
 }) {
   const shadowQuality = useRoomStore((s) => s.shadowQuality)
   const lite = useLiteFurniture(shadowQuality)
-  const castShadow = !lite
+  const castShadow = furnitureCastShadow(shadowQuality)
 
   const visual = item.visual
   const tint = invalid
@@ -100,6 +100,7 @@ export function CatalogItemMesh({
             surfaceHeight={item.surfaceHeight}
             opacity={opacity}
             selected={selected}
+            castShadow={castShadow}
           />
         </Suspense>
       </MeshErrorBoundary>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRoomStore, type WallMode } from '../store/roomStore'
 import { CoachTip } from './CoachTip'
 import { useCoarsePointer } from './useCoarsePointer'
+import { usePhoneLayout } from './usePhoneLayout'
 import { askPrompt } from './dialogStore'
 import { requireParentAccess } from './parentGate'
 
@@ -47,6 +48,8 @@ export function TopBar({
   const parentLock = useRoomStore((s) => s.parentLock)
   const importWarnings = useRoomStore((s) => s.importWarnings)
   const coarse = useCoarsePointer()
+  const phone = usePhoneLayout()
+  const compact = coarse || phone
   const [moreOpen, setMoreOpen] = useState(false)
 
   useEffect(() => {
@@ -234,8 +237,55 @@ export function TopBar({
     </>
   )
 
+  const sceneTools = (
+    <>
+      <button
+        type="button"
+        className="top-bar-btn"
+        onClick={() => {
+          undo()
+          setMoreOpen(false)
+        }}
+        disabled={!canUndo}
+        title="Annuler le dernier geste (⌘Z)"
+      >
+        ↩ Undo
+      </button>
+      <button
+        type="button"
+        className="top-bar-btn"
+        onClick={() => {
+          requestCameraHome()
+          setMoreOpen(false)
+        }}
+        title="Recentrer la caméra (H)"
+      >
+        Recentrer
+      </button>
+      <button
+        type="button"
+        className="top-bar-btn top-bar-btn--primary"
+        onClick={() => {
+          setPhotoMode(true)
+          setMoreOpen(false)
+        }}
+        title="Mode photo"
+      >
+        Photo
+      </button>
+    </>
+  )
+
+  const topBarClass = [
+    'top-bar',
+    phone ? 'top-bar--phone' : '',
+    compact && !phone ? 'top-bar--tablet' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <header className={coarse ? 'top-bar top-bar--tablet' : 'top-bar'}>
+    <header className={topBarClass}>
       <div className="top-bar-row">
         <div className="top-bar-leading">
           <div className="brand-block">
@@ -243,18 +293,20 @@ export function TopBar({
               <span className="brand-badge" aria-hidden />
               <h1 className="top-bar-title">Mini Déco</h1>
             </div>
-            <button
-              type="button"
-              className={
-                coarse
-                  ? 'room-title-btn room-title-btn--compact'
-                  : 'room-title-btn'
-              }
-              onClick={() => void handleRenameRoom()}
-              title="Renommer la chambre"
-            >
-              {roomTitle}
-            </button>
+            {!phone && (
+              <button
+                type="button"
+                className={
+                  compact
+                    ? 'room-title-btn room-title-btn--compact'
+                    : 'room-title-btn'
+                }
+                onClick={() => void handleRenameRoom()}
+                title="Renommer la chambre"
+              >
+                {roomTitle}
+              </button>
+            )}
           </div>
           <div
             className="mode-toggle"
@@ -271,7 +323,7 @@ export function TopBar({
               aria-pressed={!placing}
               onClick={exitPlace}
             >
-              Regarder
+              {phone ? 'Voir' : 'Regarder'}
             </button>
             <button
               type="button"
@@ -288,7 +340,7 @@ export function TopBar({
                   : 'Choisis d’abord un meuble dans la boîte'
               }
             >
-              Placer
+              {phone ? 'Poser' : 'Placer'}
             </button>
           </div>
           <div className="mode-toggle" role="group" aria-label="Vue">
@@ -326,35 +378,39 @@ export function TopBar({
               onClick={() => useRoomStore.getState().cancelInteraction()}
               title="Lâcher l’objet"
             >
-              Annuler
+              {phone ? '✕' : 'Annuler'}
             </button>
           )}
-          <button
-            type="button"
-            className="top-bar-btn"
-            onClick={() => undo()}
-            disabled={!canUndo}
-            title="Annuler le dernier geste (⌘Z)"
-          >
-            ↩ Undo
-          </button>
-          <button
-            type="button"
-            className="top-bar-btn"
-            onClick={() => requestCameraHome()}
-            title="Recentrer la caméra (H)"
-          >
-            Recentrer
-          </button>
-          <button
-            type="button"
-            className="top-bar-btn top-bar-btn--primary"
-            onClick={() => setPhotoMode(true)}
-            title="Mode photo"
-          >
-            Photo
-          </button>
-          {!coarse && wallAndViewTools}
+          {!phone && (
+            <>
+              <button
+                type="button"
+                className="top-bar-btn"
+                onClick={() => undo()}
+                disabled={!canUndo}
+                title="Annuler le dernier geste (⌘Z)"
+              >
+                ↩ Undo
+              </button>
+              <button
+                type="button"
+                className="top-bar-btn"
+                onClick={() => requestCameraHome()}
+                title="Recentrer la caméra (H)"
+              >
+                Recentrer
+              </button>
+              <button
+                type="button"
+                className="top-bar-btn top-bar-btn--primary"
+                onClick={() => setPhotoMode(true)}
+                title="Mode photo"
+              >
+                Photo
+              </button>
+            </>
+          )}
+          {!compact && wallAndViewTools}
         </div>
         <div className="top-bar-actions">
           {importWarnings.length > 0 && (
@@ -362,7 +418,7 @@ export function TopBar({
               {importWarnings.join(' · ')}
             </p>
           )}
-          {coarse ? (
+          {compact ? (
             <div className="top-bar-more">
               <button
                 type="button"
@@ -384,8 +440,19 @@ export function TopBar({
                   role="group"
                   aria-label="Plus d’options"
                 >
+                  {phone && sceneTools}
                   {wallAndViewTools}
                   {playTools}
+                  {phone && (
+                    <button
+                      type="button"
+                      className="top-bar-btn"
+                      onClick={() => void handleRenameRoom()}
+                      title="Renommer la chambre"
+                    >
+                      Nom
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -394,7 +461,7 @@ export function TopBar({
           )}
         </div>
       </div>
-      <CoachTip />
+      <CoachTip activeOnly={phone} />
     </header>
   )
 }

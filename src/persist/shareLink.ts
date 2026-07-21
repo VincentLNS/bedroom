@@ -1,7 +1,9 @@
 import type { BedroomFileV1 } from './schema'
-import { parseLayout } from './schema'
+import { parseAnySave, type HouseFileV2 } from './houseFile'
 
 const SHARE_PARAM = 'r'
+/** Prefer hash when token is long — query strings truncate in some browsers / QR scanners. */
+const QUERY_SAFE_TOKEN_LEN = 1400
 
 function bytesToBase64Url(bytes: Uint8Array): string {
   let binary = ''
@@ -41,9 +43,11 @@ async function gzipDecode(bytes: Uint8Array): Promise<string> {
   return new Response(stream).text()
 }
 
-/** Encode a bedroom file into a compact share token (`z…` gzip or `j…` raw). */
-export async function encodeShareToken(file: BedroomFileV1): Promise<string> {
-  const json = JSON.stringify(file)
+export type SharePayload = BedroomFileV1 | HouseFileV2
+
+/** Encode a room (v1) or house (v2) into a compact share token (`z…` gzip or `j…` raw). */
+export async function encodeShareToken(payload: SharePayload): Promise<string> {
+  const json = JSON.stringify(payload)
   if (canUseGzipStreams()) {
     const gz = await gzipEncode(json)
     return `z${bytesToBase64Url(gz)}`
@@ -51,34 +55,60 @@ export async function encodeShareToken(file: BedroomFileV1): Promise<string> {
   return `j${bytesToBase64Url(new TextEncoder().encode(json))}`
 }
 
+/**
+ * Decode a share token into a house file.
+ * Legacy single-room tokens are migrated (hall/salon = presets).
+ */
 export async function decodeShareToken(
   token: string,
-): Promise<{ ok: true; file: BedroomFileV1 } | { ok: false; error: string }> {
+): Promise<
+  | { ok: true; file: HouseFileV2; kind: 'house' | 'room' }
+  | { ok: false; error: string }
+> {
   try {
-    const kind = token[0]
+    const encoding = token[0]
     const body = token.slice(1)
-    if (!body || (kind !== 'z' && kind !== 'j')) {
-      return { ok: false, error: 'Lien de chambre invalide' }
+    if (!body || (encoding !== 'z' && encoding !== 'j')) {
+      return { ok: false, error: 'Lien invalide' }
     }
     const bytes = base64UrlToBytes(body)
-    const json =
-      kind === 'z'
-        ? canUseGzipStreams()
-          ? await gzipDecode(bytes)
-          : new TextDecoder().decode(bytes)
-        : new TextDecoder().decode(bytes)
-    return parseLayout(JSON.parse(json))
+    let json: string
+    if (encoding === 'z') {
+      if (!canUseGzipStreams()) {
+        return {
+          ok: false,
+          error: 'Ce lien nécessite un navigateur plus récent',
+        }
+      }
+      json = await gzipDecode(bytes)
+    } else {
+      json = new TextDecoder().decode(bytes)
+    }
+    const data: unknown = JSON.parse(json)
+    const kind: 'house' | 'room' =
+      data &&
+      typeof data === 'object' &&
+      (data as { version?: unknown }).version === 2
+        ? 'house'
+        : 'room'
+    const parsed = parseAnySave(data)
+    if (!parsed.ok) return parsed
+    return { ok: true, file: parsed.file, kind }
   } catch {
-    return { ok: false, error: 'Impossible de lire ce lien de chambre' }
+    return { ok: false, error: 'Impossible de lire ce lien' }
   }
 }
 
-export async function buildShareUrl(file: BedroomFileV1): Promise<string> {
-  const token = await encodeShareToken(file)
+export async function buildShareUrl(payload: SharePayload): Promise<string> {
+  const token = await encodeShareToken(payload)
   const url = new URL(window.location.href)
   url.search = ''
   url.hash = ''
-  url.searchParams.set(SHARE_PARAM, token)
+  if (token.length > QUERY_SAFE_TOKEN_LEN) {
+    url.hash = `${SHARE_PARAM}=${token}`
+  } else {
+    url.searchParams.set(SHARE_PARAM, token)
+  }
   return url.toString()
 }
 
@@ -124,8 +154,8 @@ export async function shareOrCopyUrl(url: string): Promise<'shared' | 'copied' |
   try {
     if (navigator.share) {
       await navigator.share({
-        title: 'Mini Déco — ma chambre',
-        text: 'Regarde ma chambre Mini Déco !',
+        title: 'Mini Déco — ma maison',
+        text: 'Regarde ma maison Mini Déco !',
         url,
       })
       return 'shared'

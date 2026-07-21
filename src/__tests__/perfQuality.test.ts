@@ -24,7 +24,7 @@ describe('perf quality', () => {
     expect(resolveShadowQuality('off')).toBe('off')
   })
 
-  it('auto picks low on weak devices', () => {
+  it('auto picks low on weak devices but keeps Kenney', () => {
     vi.stubGlobal('navigator', {
       hardwareConcurrency: 2,
       deviceMemory: 2,
@@ -32,7 +32,9 @@ describe('perf quality', () => {
     })
     vi.stubGlobal('matchMedia', () => ({ matches: true }))
     expect(resolveShadowQuality('auto')).toBe('low')
-    expect(useLiteFurniture('auto')).toBe(true)
+    expect(useLiteFurniture('auto')).toBe(false)
+    expect(useLiteFurniture('off')).toBe(true)
+    expect(useLiteFurniture('high')).toBe(false)
   })
 
   it('labels stay short for the top bar', () => {

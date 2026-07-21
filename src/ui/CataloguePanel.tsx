@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   getCatalogItem,
   listByCategory,
@@ -8,6 +8,7 @@ import {
 import { useRoomStore, type CatalogSheet } from '../store/roomStore'
 import { ChallengesPanel } from './ChallengesPanel'
 import { useCoarsePointer } from './useCoarsePointer'
+import { usePhoneLayout } from './usePhoneLayout'
 
 const CATEGORIES: CatalogCategory[] = [
   'beds',
@@ -158,6 +159,7 @@ const SHEET_CYCLE: CatalogSheet[] = ['peek', 'half', 'full']
 
 export function CataloguePanel() {
   const coarse = useCoarsePointer()
+  const phone = usePhoneLayout()
   const [open, setOpen] = useState(true)
   const [tab, setTab] = useState<TabId>('beds')
   const pendingCatalogId = useRoomStore((s) => s.pendingCatalogId)
@@ -170,6 +172,15 @@ export function CataloguePanel() {
   const parentLock = useRoomStore((s) => s.parentLock)
   const flashToast = useRoomStore((s) => s.flashToast)
   const dragY = useRef<number | null>(null)
+  const phonePeekApplied = useRef(false)
+
+  useEffect(() => {
+    if (!phone || phonePeekApplied.current) return
+    phonePeekApplied.current = true
+    if (useRoomStore.getState().catalogSheet === 'half') {
+      setCatalogSheet('peek')
+    }
+  }, [phone, setCatalogSheet])
 
   const items = useMemo(() => {
     if (tab === 'favorites') {
@@ -186,7 +197,9 @@ export function CataloguePanel() {
     return listByCategory(tab)
   }, [tab, favorites, recents])
 
-  if (!open && !coarse) {
+  const canCollapse = !coarse || phone
+
+  if (!open && canCollapse) {
     return (
       <aside
         className="catalogue catalogue--collapsed"
@@ -198,7 +211,10 @@ export function CataloguePanel() {
           className="catalogue-expand"
           aria-expanded={false}
           aria-controls="catalogue-body"
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setOpen(true)
+            if (phone) setCatalogSheet('half')
+          }}
         >
           <span className="catalogue-expand-label">Boîte à meubles</span>
           <span className="catalogue-expand-hint" aria-hidden>
@@ -262,7 +278,7 @@ export function CataloguePanel() {
       <div className="catalogue-header">
         <div className="catalogue-header-row">
           <h2 className="catalogue-title">Boîte à meubles</h2>
-          {!coarse && (
+          {canCollapse && (
             <button
               type="button"
               className="catalogue-collapse"

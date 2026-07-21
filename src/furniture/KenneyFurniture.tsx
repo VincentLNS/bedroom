@@ -69,6 +69,7 @@ export function KenneyFurniture({
   surfaceHeight,
   opacity = 1,
   selected = false,
+  castShadow = true,
 }: {
   model: string
   footprint: [number, number]
@@ -76,6 +77,7 @@ export function KenneyFurniture({
   surfaceHeight?: number
   opacity?: number
   selected?: boolean
+  castShadow?: boolean
 }) {
   const base = `/models/kenney/${model}`
 
@@ -100,8 +102,8 @@ export function KenneyFurniture({
   useLayoutEffect(() => {
     root.traverse((child) => {
       if (!(child instanceof Mesh)) return
-      child.castShadow = true
-      child.receiveShadow = true
+      child.castShadow = castShadow
+      child.receiveShadow = castShadow
       const mats = Array.isArray(child.material)
         ? child.material
         : [child.material]
@@ -125,7 +127,7 @@ export function KenneyFurniture({
         mat.needsUpdate = true
       }
     })
-  }, [root, opacity, selected])
+  }, [root, opacity, selected, castShadow])
 
   return <primitive object={root} />
 }
