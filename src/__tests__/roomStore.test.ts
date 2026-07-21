@@ -12,7 +12,15 @@ describe('roomStore', () => {
     useRoomStore.getState().setViewMode('dollhouse')
     useRoomStore.getState().setShowGrid(true)
     useRoomStore.getState().setWallsAutoHide(true)
-    useRoomStore.setState({ undoStack: [], redoStack: [], toast: null })
+    useRoomStore.setState({
+      undoStack: [],
+      redoStack: [],
+      toast: null,
+      parentLock: false,
+      soundOn: true,
+      musicOn: false,
+      roomTitle: 'Chambre de Louise',
+    })
   })
 
   it('places an item when free', () => {
@@ -214,5 +222,25 @@ describe('roomStore', () => {
     useRoomStore.setState({ challengesDone: [] })
     expect(useRoomStore.getState().place('cat-devon-rex', -2, 5, 0)).toBe(true)
     expect(useRoomStore.getState().challengesDone).toContain('cat-garden')
+  })
+
+  it('parent lock blocks armPlace and clearRoom', () => {
+    useRoomStore.getState().setParentLock(true)
+    useRoomStore.getState().armPlace('bed-louise')
+    expect(useRoomStore.getState().pendingCatalogId).toBeNull()
+    expect(useRoomStore.getState().mode).toBe('orbit')
+
+    useRoomStore.getState().setParentLock(false)
+    expect(useRoomStore.getState().place('lightbox-louise', 5, 5, 0)).toBe(true)
+    useRoomStore.getState().setParentLock(true)
+    useRoomStore.getState().clearRoom()
+    expect(useRoomStore.getState().items).toHaveLength(1)
+  })
+
+  it('renames room title with fallback', () => {
+    useRoomStore.getState().setRoomTitle('  Chambre de Léa  ')
+    expect(useRoomStore.getState().roomTitle).toBe('Chambre de Léa')
+    useRoomStore.getState().setRoomTitle('   ')
+    expect(useRoomStore.getState().roomTitle).toBe('Chambre de Louise')
   })
 })

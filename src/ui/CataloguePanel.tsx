@@ -167,6 +167,8 @@ export function CataloguePanel() {
   const toggleFavorite = useRoomStore((s) => s.toggleFavorite)
   const catalogSheet = useRoomStore((s) => s.catalogSheet)
   const setCatalogSheet = useRoomStore((s) => s.setCatalogSheet)
+  const parentLock = useRoomStore((s) => s.parentLock)
+  const flashToast = useRoomStore((s) => s.flashToast)
   const dragY = useRef<number | null>(null)
 
   const items = useMemo(() => {
@@ -231,10 +233,17 @@ export function CataloguePanel() {
 
   return (
     <aside
-      className={sheetClass}
+      className={
+        parentLock ? `${sheetClass} catalogue--locked` : sheetClass
+      }
       onPointerDown={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
     >
+      {parentLock && (
+        <div className="catalogue-lock-banner" role="status">
+          Mode parent — boîte verrouillée
+        </div>
+      )}
       {coarse && (
         <button
           type="button"
@@ -266,7 +275,9 @@ export function CataloguePanel() {
           )}
         </div>
         <p className="catalogue-subtitle">
-          Choisis, puis appuie dans la chambre
+          {parentLock
+            ? 'Demande à un parent pour ajouter des meubles'
+            : 'Choisis, puis appuie dans la chambre'}
         </p>
       </div>
       <nav className="catalogue-tabs" aria-label="Catégories du catalogue">
@@ -349,7 +360,14 @@ export function CataloguePanel() {
                   <button
                     type="button"
                     className="catalogue-card-main"
-                    onClick={() => armPlace(item.id)}
+                    disabled={parentLock}
+                    onClick={() => {
+                      if (parentLock) {
+                        flashToast('Boîte verrouillée — mode parent', 'error')
+                        return
+                      }
+                      armPlace(item.id)
+                    }}
                     aria-pressed={selected}
                     aria-label={`Placer ${item.name}`}
                   >

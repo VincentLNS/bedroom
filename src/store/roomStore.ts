@@ -95,6 +95,14 @@ type RoomState = {
   favorites: string[]
   recents: string[]
   challengesDone: ChallengeId[]
+  /** Display name for the active home (kids can rename). */
+  roomTitle: string
+  /** Master SFX mute (snap + fanfare). */
+  soundOn: boolean
+  /** Soft ambient pad. */
+  musicOn: boolean
+  /** Parent lock — catalogue / destructive presets frozen. */
+  parentLock: boolean
   /** Whole house — each wing keeps its furniture. */
   activeRoom: HouseRoomId
   rooms: Record<HouseRoomId, PlacedItem[]>
@@ -105,6 +113,10 @@ type RoomState = {
     rooms: Record<HouseRoomId, PlacedItem[]>,
     activeRoom?: HouseRoomId,
   ) => void
+  setRoomTitle: (title: string) => void
+  setSoundOn: (on: boolean) => void
+  setMusicOn: (on: boolean) => void
+  setParentLock: (on: boolean) => void
   place: (catalogId: string, cx: number, cz: number, rot: Rotation) => boolean
   move: (instanceId: string, cx: number, cz: number) => boolean
   rotateSelected: () => boolean
@@ -288,11 +300,40 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   favorites: [],
   recents: [],
   challengesDone: [],
+  roomTitle: 'Chambre de Louise',
+  soundOn: true,
+  musicOn: false,
+  parentLock: false,
   activeRoom: 'bedroom',
   rooms: emptyHouseRooms(),
   applyingRemote: false,
 
   getOccupied: () => toFloorOccupied(get().items),
+
+  setRoomTitle: (title) => {
+    const cleaned = title.trim().slice(0, 48)
+    set({ roomTitle: cleaned || 'Chambre de Louise' })
+  },
+
+  setSoundOn: (on) => set({ soundOn: on }),
+
+  setMusicOn: (on) => set({ musicOn: on }),
+
+  setParentLock: (on) => {
+    if (on) {
+      set({
+        parentLock: true,
+        pendingCatalogId: null,
+        mode: 'orbit',
+        selectedId: null,
+        dragging: false,
+      })
+      get().flashToast('Mode parent : boîte verrouillée', 'info')
+    } else {
+      set({ parentLock: false })
+      get().flashToast('Mode parent désactivé', 'ok')
+    }
+  },
 
   setActiveRoom: (room) => {
     const state = get()
@@ -639,6 +680,10 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   setDragging: (dragging) => set({ dragging }),
 
   armPlace: (catalogId) => {
+    if (get().parentLock) {
+      get().flashToast('Boîte verrouillée — mode parent', 'error')
+      return
+    }
     get().pushRecent(catalogId)
     set({
       pendingCatalogId: catalogId,
@@ -667,6 +712,10 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     }),
 
   clearRoom: () => {
+    if (get().parentLock) {
+      get().flashToast('Mode parent : impossible de vider', 'error')
+      return
+    }
     if (get().items.length > 0) pushHistory(set, get)
     set({
       items: [],

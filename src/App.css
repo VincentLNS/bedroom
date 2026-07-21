@@ -98,6 +98,52 @@
   color: var(--ink-soft);
 }
 
+.room-title-btn {
+  margin: 0;
+  padding: 0.1rem 0.35rem;
+  border: none;
+  border-radius: 0.55rem;
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+  text-align: left;
+  cursor: pointer;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-title-btn:hover,
+.room-title-btn:focus-visible {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--mint) 18%, transparent);
+}
+
+.room-title-btn--compact {
+  max-width: 9rem;
+  font-size: 0.72rem;
+}
+
+.catalogue-lock-banner {
+  margin: 0.35rem 0.65rem 0;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.85rem;
+  border: 2px solid var(--ink);
+  background: color-mix(in srgb, var(--sun) 35%, white);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--ink);
+}
+
+.catalogue--locked .catalogue-card-main:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .mode-toggle {
   display: inline-flex;
   align-items: stretch;

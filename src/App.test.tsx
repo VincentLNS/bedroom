@@ -37,13 +37,17 @@ describe('App', () => {
       favorites: [],
       recents: [],
       challengesDone: [],
+      roomTitle: 'Chambre de Louise',
+      soundOn: true,
+      musicOn: false,
+      parentLock: false,
     })
   })
 
   it('renders Mini Déco chrome and catalogue', () => {
     render(<App />)
     expect(screen.getByRole('heading', { name: 'Mini Déco' })).toBeTruthy()
-    expect(screen.getByText(/Apprends à décorer/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Chambre de Louise' })).toBeTruthy()
     expect(screen.getByText('Astuce déco')).toBeTruthy()
     expect(screen.getByRole('heading', { name: 'Boîte à meubles' })).toBeTruthy()
     expect(screen.getByRole('group', { name: 'Mode d’interaction' })).toBeTruthy()

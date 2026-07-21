@@ -25,6 +25,7 @@ import { PhotoModeOverlay } from './ui/PhotoMode'
 import { RoomSwitcher } from './ui/RoomSwitcher'
 import { RotateDial } from './ui/RotateDial'
 import { ShareQrModal } from './ui/ShareQrModal'
+import { SoundBridge } from './ui/SoundBridge'
 import { Toast } from './ui/Toast'
 import { TopBar } from './ui/TopBar'
 import './App.css'
@@ -44,6 +45,10 @@ type Prefs = {
   shadowQuality?: ShadowQuality
   bigFingers?: boolean
   highContrast?: boolean
+  roomTitle?: string
+  soundOn?: boolean
+  musicOn?: boolean
+  parentLock?: boolean
 }
 
 function loadPrefs(): Prefs {
@@ -65,6 +70,10 @@ function savePrefs() {
     shadowQuality: s.shadowQuality,
     bigFingers: s.bigFingers,
     highContrast: s.highContrast,
+    roomTitle: s.roomTitle,
+    soundOn: s.soundOn,
+    musicOn: s.musicOn,
+    parentLock: s.parentLock,
   }
   try {
     localStorage.setItem(PREFS_KEY, JSON.stringify(prefs))
@@ -92,6 +101,10 @@ export default function App() {
       shadowQuality: prefs.shadowQuality ?? 'high',
       bigFingers: prefs.bigFingers ?? false,
       highContrast: prefs.highContrast ?? false,
+      roomTitle: prefs.roomTitle?.trim() || 'Chambre de Louise',
+      soundOn: prefs.soundOn ?? true,
+      musicOn: prefs.musicOn ?? false,
+      parentLock: prefs.parentLock ?? false,
     })
 
     let cancelled = false
@@ -138,7 +151,11 @@ export default function App() {
         state.challengesDone !== prevState.challengesDone ||
         state.shadowQuality !== prevState.shadowQuality ||
         state.bigFingers !== prevState.bigFingers ||
-        state.highContrast !== prevState.highContrast
+        state.highContrast !== prevState.highContrast ||
+        state.roomTitle !== prevState.roomTitle ||
+        state.soundOn !== prevState.soundOn ||
+        state.musicOn !== prevState.musicOn ||
+        state.parentLock !== prevState.parentLock
       ) {
         savePrefs()
       }
@@ -227,6 +244,7 @@ export default function App() {
         </main>
       </div>
       {!photoMode && <GestureCoach />}
+      <SoundBridge />
       <ShareQrModal open={shareQrOpen} onClose={() => setShareQrOpen(false)} />
       <CoPlayModal open={coPlayOpen} onClose={() => setCoPlayOpen(false)} />
       <GalleryModal open={galleryOpen} onClose={() => setGalleryOpen(false)} />

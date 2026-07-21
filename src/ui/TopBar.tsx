@@ -20,6 +20,7 @@ import {
   nextShadowQuality,
   shadowQualityLabel,
 } from '../room/lighting'
+import { exportSouvenirPdf } from './souvenirPdf'
 
 const WALL_OPTIONS: { mode: WallMode; label: string }[] = [
   { mode: 'cut', label: 'Coupés' },
@@ -67,6 +68,14 @@ export function TopBar({
   const highContrast = useRoomStore((s) => s.highContrast)
   const setHighContrast = useRoomStore((s) => s.setHighContrast)
   const flashToast = useRoomStore((s) => s.flashToast)
+  const roomTitle = useRoomStore((s) => s.roomTitle)
+  const setRoomTitle = useRoomStore((s) => s.setRoomTitle)
+  const soundOn = useRoomStore((s) => s.soundOn)
+  const setSoundOn = useRoomStore((s) => s.setSoundOn)
+  const musicOn = useRoomStore((s) => s.musicOn)
+  const setMusicOn = useRoomStore((s) => s.setMusicOn)
+  const parentLock = useRoomStore((s) => s.parentLock)
+  const setParentLock = useRoomStore((s) => s.setParentLock)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const coarse = useCoarsePointer()
   const [moreOpen, setMoreOpen] = useState(false)
@@ -141,6 +150,10 @@ export function TopBar({
   }, [])
 
   const handleEmptyPreset = () => {
+    if (parentLock) {
+      flashToast('Mode parent : impossible de vider', 'error')
+      return
+    }
     if (
       window.confirm(
         'On vide toute la chambre pour recommencer ? Tes meubles actuels disparaîtront.',
@@ -154,6 +167,10 @@ export function TopBar({
   }
 
   const handleLouisePreset = () => {
+    if (parentLock) {
+      flashToast('Mode parent : modèles verrouillés', 'error')
+      return
+    }
     if (
       window.confirm(
         'On charge le modèle « Chambre de Louise » ? Tes meubles actuels seront remplacés.',
@@ -168,6 +185,10 @@ export function TopBar({
   }
 
   const handleSalonPreset = () => {
+    if (parentLock) {
+      flashToast('Mode parent : modèles verrouillés', 'error')
+      return
+    }
     if (
       window.confirm(
         'On charge le modèle « Salon cosy » ? Tes meubles actuels seront remplacés.',
@@ -179,6 +200,39 @@ export function TopBar({
       select(null)
       setMoreOpen(false)
     }
+  }
+
+  const handleRenameRoom = () => {
+    const next =
+      window.prompt('Nom de la chambre ?', roomTitle)?.trim() ?? ''
+    if (!next) return
+    setRoomTitle(next)
+    flashToast('Chambre renommée !', 'ok')
+  }
+
+  const handleSouvenirPdf = async () => {
+    const result = await exportSouvenirPdf()
+    if (result === 'ok') flashToast('Souvenir prêt à imprimer / PDF', 'ok')
+    else if (result === 'blocked') {
+      flashToast('Autorise les pop-ups pour le souvenir', 'error')
+    } else flashToast('Capture impossible — ouvre la scène d’abord', 'error')
+    setMoreOpen(false)
+  }
+
+  const handleToggleParent = () => {
+    if (!parentLock) {
+      if (
+        !window.confirm(
+          'Activer le mode parent ? La boîte à meubles et les modèles seront verrouillés.',
+        )
+      ) {
+        return
+      }
+      setParentLock(true)
+    } else {
+      setParentLock(false)
+    }
+    setMoreOpen(false)
   }
 
   const handleShareLink = () => {
@@ -197,6 +251,10 @@ export function TopBar({
   }
 
   const handleCloudLoad = () => {
+    if (parentLock) {
+      flashToast('Mode parent : ouverture verrouillée', 'error')
+      return
+    }
     const saves = listCloudSaves()
     if (saves.length === 0) {
       flashToast('Aucune sauvegarde cloud', 'info')
@@ -251,6 +309,10 @@ export function TopBar({
   }
 
   const handleImportClick = () => {
+    if (parentLock) {
+      flashToast('Mode parent : ouverture verrouillée', 'error')
+      return
+    }
     fileInputRef.current?.click()
   }
 
@@ -331,6 +393,43 @@ export function TopBar({
         title="Qualité des ombres (perf tablette)"
       >
         {shadowQualityLabel(shadowQuality)}
+      </button>
+      <button
+        type="button"
+        className={soundOn ? 'top-bar-btn top-bar-btn--primary' : 'top-bar-btn'}
+        onClick={() => setSoundOn(!soundOn)}
+        aria-pressed={soundOn}
+        title="Sons (pose & défis)"
+      >
+        {soundOn ? 'Sons' : 'Muet'}
+      </button>
+      <button
+        type="button"
+        className={musicOn ? 'top-bar-btn top-bar-btn--primary' : 'top-bar-btn'}
+        onClick={() => setMusicOn(!musicOn)}
+        aria-pressed={musicOn}
+        title="Musique douce"
+      >
+        Musique
+      </button>
+      <button
+        type="button"
+        className={
+          parentLock ? 'top-bar-btn top-bar-btn--primary' : 'top-bar-btn'
+        }
+        onClick={handleToggleParent}
+        aria-pressed={parentLock}
+        title="Verrouille la boîte à meubles"
+      >
+        {parentLock ? 'Parent ✓' : 'Parent'}
+      </button>
+      <button
+        type="button"
+        className="top-bar-btn"
+        onClick={() => void handleSouvenirPdf()}
+        title="Souvenir imprimable / PDF"
+      >
+        Souvenir
       </button>
       <button
         type="button"
@@ -417,10 +516,24 @@ export function TopBar({
               <span className="brand-badge" aria-hidden />
               <h1 className="top-bar-title">Mini Déco</h1>
             </div>
-            {!coarse && (
-              <p className="top-bar-tagline">
-                Apprends à décorer · Chambre de Louise
-              </p>
+            {!coarse ? (
+              <button
+                type="button"
+                className="room-title-btn"
+                onClick={handleRenameRoom}
+                title="Renommer la chambre"
+              >
+                {roomTitle}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="room-title-btn room-title-btn--compact"
+                onClick={handleRenameRoom}
+                title="Renommer la chambre"
+              >
+                {roomTitle}
+              </button>
             )}
           </div>
           <div
