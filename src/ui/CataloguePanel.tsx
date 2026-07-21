@@ -8,7 +8,7 @@ import {
 import { useRoomStore, type CatalogSheet } from '../store/roomStore'
 import { ChallengesPanel } from './ChallengesPanel'
 import { useCoarsePointer } from './useCoarsePointer'
-import { usePhoneLayout } from './usePhoneLayout'
+import { isPhoneViewport, usePhoneLayout } from './usePhoneLayout'
 
 const CATEGORIES: CatalogCategory[] = [
   'beds',
@@ -160,7 +160,7 @@ const SHEET_CYCLE: CatalogSheet[] = ['peek', 'half', 'full']
 export function CataloguePanel() {
   const coarse = useCoarsePointer()
   const phone = usePhoneLayout()
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(() => !isPhoneViewport())
   const [tab, setTab] = useState<TabId>('beds')
   const pendingCatalogId = useRoomStore((s) => s.pendingCatalogId)
   const armPlace = useRoomStore((s) => s.armPlace)

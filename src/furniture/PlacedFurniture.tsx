@@ -12,6 +12,7 @@ import {
 } from '../placement'
 import { useRoomStore, type Rotation } from '../store/roomStore'
 import { CatalogItemMesh } from './CatalogItemMesh'
+import { setFurnitureHoverCursor } from '../scene/SceneCursor'
 
 export function footprintWorldCenter(
   cx: number,
@@ -58,9 +59,10 @@ export function PlacedFurniture() {
   const [dragPreview, setDragPreview] = useState<DragPreview | null>(null)
   const dragPreviewRef = useRef<DragPreview | null>(null)
 
-  const { camera, pointer, raycaster, gl } = useThree()
+  const { camera, pointer, raycaster } = useThree()
   const floorPlane = useMemo(() => new Plane(new Vector3(0, 1, 0), 0), [])
   const hitPoint = useMemo(() => new Vector3(), [])
+  const hoveredIdRef = useRef<string | null>(null)
 
   useLayoutEffect(() => {
     const group = groupRef.current
@@ -156,20 +158,65 @@ export function PlacedFurniture() {
 
     window.addEventListener('pointerup', onUp)
     window.addEventListener('pointercancel', onCancel)
-    gl.domElement.style.cursor = 'grabbing'
 
     return () => {
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('pointercancel', onCancel)
-      gl.domElement.style.cursor = ''
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dragging, gl, move, setDragging])
+  }, [dragging, move, setDragging])
+
+  const applyHoverCursor = (instanceId: string | null) => {
+    if (!instanceId || mode === 'place') {
+      setFurnitureHoverCursor(null)
+      return
+    }
+    const item = useRoomStore
+      .getState()
+      .items.find((i) => i.instanceId === instanceId)
+    if (!item) {
+      setFurnitureHoverCursor(null)
+      return
+    }
+    if (item.locked && instanceId === useRoomStore.getState().selectedId) {
+      setFurnitureHoverCursor('not-allowed')
+      return
+    }
+    if (instanceId === useRoomStore.getState().selectedId) {
+      setFurnitureHoverCursor('grab')
+      return
+    }
+    setFurnitureHoverCursor('pointer')
+  }
+
+  useEffect(() => {
+    applyHoverCursor(hoveredIdRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, mode, items])
+
+  useEffect(() => {
+    return () => setFurnitureHoverCursor(null)
+  }, [])
 
   const onItemClick = (e: ThreeEvent<MouseEvent>, instanceId: string) => {
     e.stopPropagation()
     if (mode === 'place') return
     select(instanceId)
+  }
+
+  const onItemPointerOver = (
+    e: ThreeEvent<PointerEvent>,
+    instanceId: string,
+  ) => {
+    e.stopPropagation()
+    hoveredIdRef.current = instanceId
+    applyHoverCursor(instanceId)
+  }
+
+  const onItemPointerOut = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation()
+    hoveredIdRef.current = null
+    setFurnitureHoverCursor(null)
   }
 
   const onItemPointerDown = (
@@ -243,6 +290,8 @@ export function PlacedFurniture() {
             onPointerDown={(e) =>
               onItemPointerDown(e, item.instanceId, item.cx, item.cz)
             }
+            onPointerOver={(e) => onItemPointerOver(e, item.instanceId)}
+            onPointerOut={onItemPointerOut}
           >
             <CatalogItemMesh
               item={catalog}

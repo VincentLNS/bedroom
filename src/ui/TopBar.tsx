@@ -33,6 +33,8 @@ export function TopBar({
   const setViewMode = useRoomStore((s) => s.setViewMode)
   const showGrid = useRoomStore((s) => s.showGrid)
   const toggleShowGrid = useRoomStore((s) => s.toggleShowGrid)
+  const showDoorLabels = useRoomStore((s) => s.showDoorLabels)
+  const toggleShowDoorLabels = useRoomStore((s) => s.toggleShowDoorLabels)
   const requestCameraHome = useRoomStore((s) => s.requestCameraHome)
   const canUndo = useRoomStore((s) => s.undoStack.length > 0)
   const undo = useRoomStore((s) => s.undo)
@@ -178,6 +180,17 @@ export function TopBar({
         title="Afficher ou cacher la grille (G)"
       >
         Grille
+      </button>
+      <button
+        type="button"
+        className={
+          showDoorLabels ? 'top-bar-btn top-bar-btn--primary' : 'top-bar-btn'
+        }
+        onClick={() => toggleShowDoorLabels()}
+        aria-pressed={showDoorLabels}
+        title="Afficher les noms sur les portes (Salon, Couloir…)"
+      >
+        Noms portes
       </button>
     </>
   )

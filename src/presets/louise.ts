@@ -15,13 +15,24 @@ type LouiseSlot = {
  * Zones :
  *   sommeil (+X) · bureau (+Z) · jeu (−X) · rangement porte (−Z)
  * Clearance porte : cx 2–3, cz 0–1.
- * Lit : tête −Z, étagère −X (vers la pièce).
- * Maison : façade (porte/fenêtres) vers la pièce (+X).
+ *
+ * Orientation (après rotation Y) :
+ * - Lit primitif : tête −Z, pieds +Z, étagère −X → rot 0 contre mur +X.
+ * - Kenney (armoire, bibliothèque, chaises, coffre) : façade / assise = −Z local
+ *   → rot 180 contre mur porte (−Z), rot 270 contre mur jeu (−X).
+ * - Bureau Louise : hutch −Z local → rot 180 contre fenêtre pour hutch au mur.
+ * - Maison / Trofast primitifs : façade +Z local → rot 90 contre mur −X.
  */
 const LOUISE_SLOTS: LouiseSlot[] = [
-  // ── Mur porte (−Z) ────────────────────────────────────────
-  { id: 'louise-wardrobe', catalogId: 'wardrobe-oak', cx: 0, cz: 0, rot: 0 },
-  { id: 'louise-bookshelf', catalogId: 'bookshelf-oak', cx: 4, cz: 0 },
+  // ── Mur porte (−Z) — façades Kenney vers la pièce (+Z) ────
+  { id: 'louise-wardrobe', catalogId: 'wardrobe-oak', cx: 0, cz: 0, rot: 180 },
+  {
+    id: 'louise-bookshelf',
+    catalogId: 'bookshelf-oak',
+    cx: 4,
+    cz: 0,
+    rot: 180,
+  },
 
   // ── Mur lit (+X) ──────────────────────────────────────────
   { id: 'louise-bed', catalogId: 'bed-louise', cx: 6, cz: 3, rot: 0 },
@@ -48,13 +59,26 @@ const LOUISE_SLOTS: LouiseSlot[] = [
   },
   { id: 'louise-lamp-floor', catalogId: 'floor-lamp-cream', cx: 7, cz: 2 },
   { id: 'louise-nightlight', catalogId: 'night-light-moon', cx: 5, cz: 3 },
-  { id: 'louise-rattan', catalogId: 'chair-rattan-child', cx: 4, cz: 7 },
+  // Assise vers le tapis / lit (local −Z → world +X avec rot 270)
+  {
+    id: 'louise-rattan',
+    catalogId: 'chair-rattan-child',
+    cx: 4,
+    cz: 7,
+    rot: 270,
+  },
   { id: 'louise-pouf', catalogId: 'pouf-pink', cx: 3, cz: 7 },
   { id: 'louise-basket-1', catalogId: 'basket-wicker-pompom', cx: 5, cz: 9 },
 
-  // ── Mur fenêtre (+Z) : bureau ─────────────────────────────
-  { id: 'louise-desk', catalogId: 'desk-louise', cx: 1, cz: 10, rot: 0 },
-  { id: 'louise-chair', catalogId: 'chair-swivel-white', cx: 2, cz: 9 },
+  // ── Mur fenêtre (+Z) : bureau — hutch au mur, chaise face au bureau
+  { id: 'louise-desk', catalogId: 'desk-louise', cx: 1, cz: 10, rot: 180 },
+  {
+    id: 'louise-chair',
+    catalogId: 'chair-swivel-white',
+    cx: 2,
+    cz: 9,
+    rot: 180,
+  },
   {
     id: 'louise-lamp',
     catalogId: 'lamp-rattan-gold',
@@ -82,13 +106,20 @@ const LOUISE_SLOTS: LouiseSlot[] = [
     rot: 90,
   },
   { id: 'louise-trofast', catalogId: 'trofast-low', cx: 0, cz: 5, rot: 90 },
-  { id: 'louise-chest', catalogId: 'chest-lego-white', cx: 0, cz: 8, rot: 0 },
+  // Kenney cabinetBed : porte −Z local → rot 270 pour ouvrir vers +X
+  {
+    id: 'louise-chest',
+    catalogId: 'chest-lego-white',
+    cx: 0,
+    cz: 8,
+    rot: 270,
+  },
   {
     id: 'louise-lego',
     catalogId: 'lego-cluster',
     cx: 0,
     cz: 8,
-    rot: 0,
+    rot: 90,
     parentId: 'louise-chest',
   },
 

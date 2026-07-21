@@ -13,6 +13,7 @@ import { resolveShadowQuality } from '../perf/quality'
 import { useRoomStore } from '../store/roomStore'
 import { PlacementController } from './PlacementController'
 import { SceneCameraControls } from './SceneCameraControls'
+import { SceneCursor } from './SceneCursor'
 import { GlCaptureBridge } from './GlCaptureBridge'
 
 type Props = {
@@ -58,6 +59,7 @@ export function BedroomScene({ onReady }: Props) {
       <SnapPulse />
       <PlacementController />
       <SceneCameraControls />
+      <SceneCursor />
       <GlCaptureBridge />
     </Canvas>
   )

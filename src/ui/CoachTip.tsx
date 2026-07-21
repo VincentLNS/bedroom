@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { getCatalogItem } from '../catalog'
 import { useRoomStore } from '../store/roomStore'
+import { usePhoneLayout } from './usePhoneLayout'
 
 const TIPS = [
   'Laisse toujours un chemin libre devant la porte pour entrer !',
@@ -67,26 +68,30 @@ export function CoachTip({ activeOnly = false }: { activeOnly?: boolean }) {
   )
 }
 
-/** Tiny floating label over the 3D scene. */
+/** Tiny floating label over the 3D scene — quiet on phones. */
 export function SceneHud() {
   const mode = useRoomStore((s) => s.mode)
   const pendingCatalogId = useRoomStore((s) => s.pendingCatalogId)
   const selectedId = useRoomStore((s) => s.selectedId)
   const viewMode = useRoomStore((s) => s.viewMode)
   const canUndo = useRoomStore((s) => s.undoStack.length > 0)
+  const phone = usePhoneLayout()
 
   let label = viewMode === 'plan' ? 'Vue plan' : 'Regarde ta chambre'
   let tone = 'idle'
   if (pendingCatalogId || mode === 'place') {
-    label = 'Mode placer · 2 doigts = caméra'
+    label = phone ? 'Poser · 2 doigts = caméra' : 'Mode placer · 2 doigts = caméra'
     tone = 'place'
   } else if (selectedId) {
-    label = 'Meuble sélectionné'
+    label = phone ? 'Sélectionné' : 'Meuble sélectionné'
     tone = 'edit'
   } else if (canUndo) {
     label = '↩ pour annuler'
     tone = 'hint'
   }
+
+  // Idle / hint pills clutter the room on a small screen.
+  if (phone && (tone === 'idle' || tone === 'hint')) return null
 
   return (
     <div className="scene-hud" aria-hidden>

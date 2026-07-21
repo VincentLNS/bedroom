@@ -52,6 +52,7 @@ type Prefs = {
   soundOn?: boolean
   musicOn?: boolean
   parentLock?: boolean
+  showDoorLabels?: boolean
 }
 
 function loadPrefs(): Prefs {
@@ -77,6 +78,7 @@ function savePrefs() {
     soundOn: s.soundOn,
     musicOn: s.musicOn,
     parentLock: s.parentLock,
+    showDoorLabels: s.showDoorLabels,
   }
   try {
     localStorage.setItem(PREFS_KEY, JSON.stringify(prefs))
@@ -110,6 +112,7 @@ export default function App() {
       soundOn: prefs.soundOn ?? true,
       musicOn: prefs.musicOn ?? false,
       parentLock: prefs.parentLock ?? false,
+      showDoorLabels: prefs.showDoorLabels ?? false,
     })
 
     let cancelled = false
@@ -179,7 +182,8 @@ export default function App() {
         state.roomTitle !== prevState.roomTitle ||
         state.soundOn !== prevState.soundOn ||
         state.musicOn !== prevState.musicOn ||
-        state.parentLock !== prevState.parentLock
+        state.parentLock !== prevState.parentLock ||
+        state.showDoorLabels !== prevState.showDoorLabels
       ) {
         savePrefs()
       }
@@ -258,6 +262,11 @@ export default function App() {
         onOpenGallery={() => setGalleryOpen(true)}
         onOpenParent={() => setParentOpen(true)}
       />
+      {phone && !photoMode && (
+        <div className="phone-room-strip">
+          <RoomSwitcher variant="strip" />
+        </div>
+      )}
       <div className="workspace">
         {!photoMode && <CataloguePanel />}
         <main className="scene-host">
@@ -265,7 +274,7 @@ export default function App() {
           <Suspense fallback={null}>
             <BedroomScene onReady={() => setSceneReady(true)} />
           </Suspense>
-          <RoomSwitcher />
+          {!phone && <RoomSwitcher />}
           <ActionDock />
           <RotateDial />
           <Toast />

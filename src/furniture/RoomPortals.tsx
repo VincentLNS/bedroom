@@ -1,9 +1,15 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { ThreeEvent } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import type { HouseRoomId } from '../house/rooms'
-import { ROOM_MIN_X, ROOM_MIN_Z, ROOM_WIDTH_M, ROOM_DEPTH_M } from '../room/constants'
+import {
+  ROOM_MIN_X,
+  ROOM_MIN_Z,
+  ROOM_WIDTH_M,
+  ROOM_DEPTH_M,
+} from '../room/constants'
 import { useRoomStore } from '../store/roomStore'
+import { usePhoneLayout } from '../ui/usePhoneLayout'
 
 const DOOR_H = 1.35
 const DOOR_W = 0.72
@@ -41,6 +47,9 @@ function portalsFor(active: HouseRoomId): Portal[] {
 function DoorPortal({ portal }: { portal: Portal }) {
   const setActiveRoom = useRoomStore((s) => s.setActiveRoom)
   const mode = useRoomStore((s) => s.mode)
+  const showDoorLabels = useRoomStore((s) => s.showDoorLabels)
+  const phone = usePhoneLayout()
+  const [hover, setHover] = useState(false)
 
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     if (mode === 'place') return
@@ -48,11 +57,20 @@ function DoorPortal({ portal }: { portal: Portal }) {
     setActiveRoom(portal.to)
   }
 
+  // Phone: never float Html labels over the room (switcher is enough).
+  const showLabel = !phone && (showDoorLabels || hover)
+
   return (
     <group
       position={[portal.x, 0, portal.z]}
       rotation={[0, portal.rotY, 0]}
       onClick={onClick}
+      onPointerOver={(e) => {
+        if (phone) return
+        e.stopPropagation()
+        setHover(true)
+      }}
+      onPointerOut={() => setHover(false)}
     >
       <mesh position={[0, DOOR_H / 2, 0]} castShadow>
         <boxGeometry args={[DOOR_W, DOOR_H, 0.06]} />
@@ -66,9 +84,11 @@ function DoorPortal({ portal }: { portal: Portal }) {
           roughness={0.35}
         />
       </mesh>
-      <Html position={[0, DOOR_H + 0.22, 0.05]} center distanceFactor={6}>
-        <span className="door-label">{portal.label}</span>
-      </Html>
+      {showLabel && (
+        <Html position={[0, DOOR_H + 0.22, 0.05]} center distanceFactor={6}>
+          <span className="door-label">{portal.label}</span>
+        </Html>
+      )}
       <mesh position={[0, DOOR_H / 2, 0.05]} visible={false} onClick={onClick}>
         <boxGeometry args={[DOOR_W + 0.25, DOOR_H + 0.3, 0.35]} />
       </mesh>

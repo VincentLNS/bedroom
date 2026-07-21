@@ -8,8 +8,13 @@ const TINY: Record<HouseRoomId, string> = {
   salon: 'Sal.',
 }
 
+type Props = {
+  /** `strip` = outside the 3D view (phone). Default overlays the scene. */
+  variant?: 'overlay' | 'strip'
+}
+
 /** Switch between chambre / couloir / salon. */
-export function RoomSwitcher() {
+export function RoomSwitcher({ variant = 'overlay' }: Props) {
   const activeRoom = useRoomStore((s) => s.activeRoom)
   const setActiveRoom = useRoomStore((s) => s.setActiveRoom)
   const photoMode = useRoomStore((s) => s.photoMode)
@@ -17,8 +22,18 @@ export function RoomSwitcher() {
 
   if (photoMode) return null
 
+  const compact = phone || variant === 'strip'
+
   return (
-    <div className="room-switcher" role="group" aria-label="Pièces de la maison">
+    <div
+      className={
+        variant === 'strip'
+          ? 'room-switcher room-switcher--strip'
+          : 'room-switcher'
+      }
+      role="group"
+      aria-label="Pièces de la maison"
+    >
       {HOUSE_ROOMS.map((room) => (
         <button
           key={room.id}
@@ -32,7 +47,7 @@ export function RoomSwitcher() {
           aria-label={room.label}
           onClick={() => setActiveRoom(room.id as HouseRoomId)}
         >
-          {phone ? TINY[room.id] : room.short}
+          {compact ? TINY[room.id] : room.short}
         </button>
       ))}
     </div>

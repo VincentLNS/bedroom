@@ -1179,6 +1179,37 @@
     font-size: 0.78rem;
   }
 
+  .phone-room-strip {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    padding: 0.2rem 0.55rem 0.35rem;
+    padding-left: max(0.55rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.55rem, env(safe-area-inset-right, 0px));
+    background:
+      linear-gradient(180deg, rgba(255, 250, 240, 0.92), rgba(255, 250, 240, 0.55));
+    border-bottom: 2px dashed color-mix(in srgb, var(--mint) 40%, transparent);
+  }
+
+  .room-switcher--strip {
+    position: static;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    gap: 0.15rem;
+    padding: 0.15rem;
+    max-width: none;
+    border-width: 2px;
+    box-shadow: none;
+    background: color-mix(in srgb, var(--paper) 78%, transparent);
+  }
+
+  .room-switcher--strip .room-switcher-btn {
+    min-height: 36px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.75rem;
+  }
+
   .action-dock {
     bottom: calc(0.45rem + env(safe-area-inset-bottom, 0px));
     gap: 0.28rem;
@@ -1201,21 +1232,29 @@
 
   .rotate-dial {
     right: 0.4rem;
-    bottom: calc(4.4rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(0.55rem + env(safe-area-inset-bottom, 0px));
   }
 
   .scene-host:has(.action-dock) .rotate-dial {
-    bottom: calc(8.6rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(5.1rem + env(safe-area-inset-bottom, 0px));
   }
 
   .rotate-dial-pad {
-    width: 3.85rem;
-    height: 3.85rem;
+    width: 3.5rem;
+    height: 3.5rem;
   }
 
   .scene-hud {
-    top: 0.45rem;
-    left: 0.45rem;
+    top: 0.4rem;
+    left: 0.4rem;
+    max-width: min(200px, 55%);
+  }
+
+  .scene-hud-pill {
+    padding: 0.28rem 0.55rem;
+    border-width: 2px;
+    font-size: 0.72rem;
+    box-shadow: none;
   }
 
   .toast {
@@ -1229,6 +1268,15 @@
   .photo-mode-bar {
     flex-wrap: wrap;
     justify-content: center;
+  }
+
+  .catalogue--collapsed {
+    max-height: none;
+  }
+
+  .catalogue-expand {
+    min-height: 2.6rem;
+    padding: 0.45rem 0.85rem;
   }
 }
 
@@ -1256,6 +1304,10 @@
   box-shadow: var(--shadow-sm);
   touch-action: none;
   cursor: grab;
+}
+
+.rotate-dial-pad:hover {
+  background: color-mix(in srgb, var(--sun) 28%, white);
 }
 
 .rotate-dial-pad--active {

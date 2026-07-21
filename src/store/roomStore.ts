@@ -80,6 +80,8 @@ type RoomState = {
   wallMode: WallMode
   viewMode: ViewMode
   showGrid: boolean
+  /** Floating Html labels on room portals (Couloir / Salon…). Off by default — less clutter. */
+  showDoorLabels: boolean
   wallsAutoHide: boolean
   cameraHomeTick: number
   importWarnings: string[]
@@ -141,6 +143,8 @@ type RoomState = {
   setViewMode: (mode: ViewMode) => void
   setShowGrid: (show: boolean) => void
   toggleShowGrid: () => void
+  setShowDoorLabels: (show: boolean) => void
+  toggleShowDoorLabels: () => void
   setWallsAutoHide: (on: boolean) => void
   requestCameraHome: () => void
   undo: () => boolean
@@ -285,6 +289,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   wallMode: 'cut',
   viewMode: 'dollhouse',
   showGrid: true,
+  showDoorLabels: false,
   wallsAutoHide: true,
   cameraHomeTick: 0,
   importWarnings: [],
@@ -780,6 +785,11 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   setShowGrid: (show) => set({ showGrid: show }),
 
   toggleShowGrid: () => set((state) => ({ showGrid: !state.showGrid })),
+
+  setShowDoorLabels: (show) => set({ showDoorLabels: show }),
+
+  toggleShowDoorLabels: () =>
+    set((state) => ({ showDoorLabels: !state.showDoorLabels })),
 
   setWallsAutoHide: (on) => set({ wallsAutoHide: on }),
 
