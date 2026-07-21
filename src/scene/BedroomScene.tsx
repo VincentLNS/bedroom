@@ -9,6 +9,7 @@ import { GhostPreview } from '../furniture/GhostPreview'
 import { PlacedFurniture } from '../furniture/PlacedFurniture'
 import { RoomPortals } from '../furniture/RoomPortals'
 import { SnapPulse } from '../furniture/SnapPulse'
+import { resolveShadowQuality } from '../perf/quality'
 import { useRoomStore } from '../store/roomStore'
 import { PlacementController } from './PlacementController'
 import { SceneCameraControls } from './SceneCameraControls'
@@ -21,15 +22,25 @@ type Props = {
 export function BedroomScene({ onReady }: Props) {
   const showGrid = useRoomStore((s) => s.showGrid)
   const shadowQuality = useRoomStore((s) => s.shadowQuality)
+  const resolved = resolveShadowQuality(shadowQuality)
 
   return (
     <Canvas
-      shadows={shadowQuality !== 'off'}
-      dpr={shadowQuality === 'off' ? [1, 1.25] : [1, 2]}
+      shadows={resolved !== 'off'}
+      dpr={
+        resolved === 'off'
+          ? [1, 1]
+          : resolved === 'low'
+            ? [1, 1.5]
+            : [1, 2]
+      }
       camera={{ position: [3.6, 3.8, 5.2], fov: 40, near: 0.1, far: 80 }}
-      gl={{ preserveDrawingBuffer: true }}
+      gl={{
+        preserveDrawingBuffer: true,
+        powerPreference: resolved === 'high' ? 'high-performance' : 'default',
+        antialias: resolved === 'high',
+      }}
       onCreated={() => {
-        // Let materials/HDR settle one frame before dismissing splash.
         requestAnimationFrame(() => onReady?.())
       }}
     >

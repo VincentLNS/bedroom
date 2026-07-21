@@ -99,7 +99,7 @@ export default function App() {
       favorites: prefs.favorites ?? [],
       recents: prefs.recents ?? [],
       challengesDone: prefs.challengesDone ?? [],
-      shadowQuality: prefs.shadowQuality ?? 'high',
+      shadowQuality: prefs.shadowQuality ?? 'auto',
       bigFingers: prefs.bigFingers ?? false,
       highContrast: prefs.highContrast ?? false,
       roomTitle: prefs.roomTitle?.trim() || 'Chambre de Louise',

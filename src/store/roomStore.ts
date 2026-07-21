@@ -51,7 +51,7 @@ export type ToastState = {
   id: number
 }
 
-export type ShadowQuality = 'off' | 'low' | 'high'
+export type ShadowQuality = 'auto' | 'off' | 'low' | 'high'
 
 export type CatalogSheet = 'peek' | 'half' | 'full'
 
@@ -293,7 +293,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   toast: null,
   snapPulse: null,
   photoMode: false,
-  shadowQuality: 'high',
+  shadowQuality: 'auto',
   bigFingers: false,
   highContrast: false,
   catalogSheet: 'half',

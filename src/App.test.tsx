@@ -30,7 +30,7 @@ describe('App', () => {
       toast: null,
       snapPulse: null,
       photoMode: false,
-      shadowQuality: 'high',
+      shadowQuality: 'auto',
       bigFingers: false,
       highContrast: false,
       catalogSheet: 'half',

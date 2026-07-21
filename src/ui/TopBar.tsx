@@ -19,7 +19,7 @@ import { useCoarsePointer } from './useCoarsePointer'
 import {
   nextShadowQuality,
   shadowQualityLabel,
-} from '../room/lighting'
+} from '../perf/quality'
 import { exportSouvenirPdf } from './souvenirPdf'
 
 const WALL_OPTIONS: { mode: WallMode; label: string }[] = [
@@ -80,16 +80,8 @@ export function TopBar({
   const coarse = useCoarsePointer()
   const [moreOpen, setMoreOpen] = useState(false)
 
-  if (photoMode) return null
-
-  const placing = mode === 'place'
-  const hasPending = pendingCatalogId != null
-
-  const exitPlace = () => {
-    useRoomStore.getState().cancelInteraction()
-  }
-
   useEffect(() => {
+    if (photoMode) return
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
       if (
@@ -147,8 +139,16 @@ export function TopBar({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [photoMode])
 
+  if (photoMode) return null
+
+  const placing = mode === 'place'
+  const hasPending = pendingCatalogId != null
+
+  const exitPlace = () => {
+    useRoomStore.getState().cancelInteraction()
+  }
   const handleEmptyPreset = () => {
     if (parentLock) {
       flashToast('Mode parent : impossible de vider', 'error')

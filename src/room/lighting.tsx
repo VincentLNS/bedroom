@@ -1,8 +1,10 @@
 import { Environment } from '@react-three/drei'
-import { useRoomStore, type ShadowQuality } from '../store/roomStore'
+import { resolveShadowQuality } from '../perf/quality'
+import { useRoomStore } from '../store/roomStore'
 
 export function SceneLights() {
-  const quality = useRoomStore((s) => s.shadowQuality)
+  const qualityPref = useRoomStore((s) => s.shadowQuality)
+  const quality = resolveShadowQuality(qualityPref)
   const shadowsOn = quality !== 'off'
   const mapSize = quality === 'high' ? 1024 : 512
 
@@ -27,7 +29,7 @@ export function SceneLights() {
       />
       <pointLight
         position={[0, 1.7, 2.0]}
-        intensity={0.55}
+        intensity={quality === 'high' ? 0.55 : 0.4}
         color="#ffe4a8"
         distance={8}
         decay={2}
@@ -43,12 +45,12 @@ export function SceneLights() {
         </>
       )}
       {quality === 'low' && (
-        <Environment preset="apartment" environmentIntensity={0.22} />
+        <Environment preset="apartment" environmentIntensity={0.18} />
       )}
-      {quality !== 'off' && (
+      {quality === 'high' && (
         <pointLight
           position={[-0.5, 1.8, -1.9]}
-          intensity={quality === 'high' ? 0.32 : 0.2}
+          intensity={0.32}
           color="#f5f0ea"
           distance={5}
           decay={2}
@@ -56,16 +58,4 @@ export function SceneLights() {
       )}
     </>
   )
-}
-
-export function nextShadowQuality(q: ShadowQuality): ShadowQuality {
-  if (q === 'high') return 'low'
-  if (q === 'low') return 'off'
-  return 'high'
-}
-
-export function shadowQualityLabel(q: ShadowQuality): string {
-  if (q === 'high') return 'Ombres ↑'
-  if (q === 'low') return 'Ombres ↓'
-  return 'Ombres off'
 }

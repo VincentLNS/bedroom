@@ -9,21 +9,25 @@ npm install
 npm run dev
 ```
 
+```bash
+npm test
+npm run build
+```
+
 ## Prod
 
 - GitHub : https://github.com/VincentLNS/bedroom
-- Vercel : https://bedroom-swart.vercel.app
+- Vercel : https://bedroom-swart.vercel.app  
+  Les **pull requests** reçoivent une preview Vercel automatiquement (projet déjà lié).
 
-### Domaine custom
+## CI
 
-Dans [Vercel → bedroom → Settings → Domains](https://vercel.com/lanetscouade/bedroom/settings/domains), ajoute ton domaine puis pointe le DNS :
+À chaque push / PR, GitHub Actions lance lint + tests + build (voir `.github/workflows/ci.yml`).
 
-- **Apex** : enregistrement `A` vers `76.76.21.21`
-- **www** : `CNAME` vers `cname.vercel-dns.com`
+## Fonctions
 
-### Fonctions
-
-- Lien partageable (`?r=…`) + Web Share photo
-- Sauvegardes cloud locales (cet appareil)
-- Presets Chambre Louise / Salon cosy
-- Défis à étoiles, PWA tablette, analytics Vercel
+- Maison multi-pièces (chambre / couloir / salon) avec autosave complet
+- Lien partageable (`?r=…`) + QR + Web Share photo
+- Co-déco PeerJS, galerie locale, mode parent, sons / musique
+- Qualité graphique **Auto** (allège Kenney + ombres sur tablettes faibles)
+- Sauvegardes cloud locales (cet appareil), presets, défis, PWA
