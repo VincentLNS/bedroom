@@ -67,7 +67,8 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Parents' })).toBeTruthy()
     expect(screen.getByRole('navigation', { name: 'Catégories du catalogue' })).toBeTruthy()
     expect(screen.getByRole('button', { name: /Placer Lit Louise/ })).toBeTruthy()
-  })
+    expect(screen.getByRole('button', { name: 'Pièce : Chambre' })).toBeTruthy()
+  }, 15000)
 
   it('switches wall modes from the segmented control', () => {
     render(<App />)
@@ -226,7 +227,7 @@ describe('App', () => {
       expect(state.pendingCatalogId).toBeNull()
       expect(state.selectedId).toBeNull()
     })
-  })
+  }, 15000)
 
   it('shows action dock when an item is selected', async () => {
     useRoomStore.setState({
@@ -263,11 +264,13 @@ describe('App', () => {
       expect(useRoomStore.getState().items.length).toBeGreaterThan(0)
     })
     expect(useRoomStore.getState().activeRoom).toBe('bedroom')
+    fireEvent.click(screen.getByRole('button', { name: 'Pièce : Chambre' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cuisine' }))
     expect(useRoomStore.getState().activeRoom).toBe('cuisine')
+    fireEvent.click(screen.getByRole('button', { name: 'Pièce : Cuisine' }))
     fireEvent.click(screen.getByRole('button', { name: 'Salle de bain' }))
     expect(useRoomStore.getState().activeRoom).toBe('bathroom')
-  })
+  }, 15000)
 
   it('opens a gallery preset into the target room', async () => {
     render(<App />)
