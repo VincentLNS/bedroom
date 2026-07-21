@@ -57,6 +57,20 @@ const LOUISE_SLOTS: LouiseSlot[] = [
     cz: 6,
     parentId: 'louise-bed',
   },
+  {
+    id: 'louise-pillow',
+    catalogId: 'pillow-coral',
+    cx: 7,
+    cz: 3,
+    parentId: 'louise-bed',
+  },
+  {
+    id: 'louise-bear',
+    catalogId: 'bear-honey',
+    cx: 7,
+    cz: 4,
+    parentId: 'louise-bed',
+  },
   { id: 'louise-lamp-floor', catalogId: 'floor-lamp-cream', cx: 7, cz: 2 },
   { id: 'louise-nightlight', catalogId: 'night-light-moon', cx: 5, cz: 3 },
   // Assise vers le tapis / lit (local −Z → world +X avec rot 270)
@@ -148,6 +162,8 @@ const LOUISE_SLOTS: LouiseSlot[] = [
   },
 
   // ── Jardin ───────────────────────────────────────────────
+  { id: 'louise-sandbox', catalogId: 'sandbox-garden', cx: -2, cz: 3 },
+  { id: 'louise-aquarium', catalogId: 'aquarium-sky', cx: 5, cz: 10 },
   { id: 'louise-devon', catalogId: 'cat-devon-rex', cx: -2, cz: 8 },
   { id: 'louise-duck', catalogId: 'duck-yellow', cx: -1, cz: 10 },
   { id: 'louise-frog', catalogId: 'frog-green', cx: 8, cz: 4 },

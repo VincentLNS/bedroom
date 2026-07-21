@@ -15,6 +15,8 @@ export type StylishKind =
   | 'gardenSwing'
   | 'miniTrampoline'
   | 'cloudShelf'
+  | 'sandBox'
+  | 'aquarium'
 
 export function StylishPrimitive({
   kind,
@@ -438,6 +440,116 @@ export function StylishPrimitive({
           <mesh position={[0.1, 0.28, 0]} castShadow>
             <boxGeometry args={[0.04, 0.28, 0.04]} />
             <Mat color={OAK} {...m} />
+          </mesh>
+        </group>
+      )
+    }
+
+    case 'sandBox': {
+      const rim = 0.06
+      return (
+        <group>
+          {/* Cadre bois */}
+          <mesh position={[0, 0.08, -d * 0.5 + rim * 0.5]} castShadow>
+            <boxGeometry args={[w, 0.16, rim]} />
+            <Mat color={OAK} {...m} />
+          </mesh>
+          <mesh position={[0, 0.08, d * 0.5 - rim * 0.5]} castShadow>
+            <boxGeometry args={[w, 0.16, rim]} />
+            <Mat color={OAK} {...m} />
+          </mesh>
+          <mesh position={[-w * 0.5 + rim * 0.5, 0.08, 0]} castShadow>
+            <boxGeometry args={[rim, 0.16, d - rim * 2]} />
+            <Mat color={OAK} {...m} />
+          </mesh>
+          <mesh position={[w * 0.5 - rim * 0.5, 0.08, 0]} castShadow>
+            <boxGeometry args={[rim, 0.16, d - rim * 2]} />
+            <Mat color={OAK} {...m} />
+          </mesh>
+          {/* Sable */}
+          <mesh position={[0, 0.1, 0]} receiveShadow>
+            <boxGeometry args={[w - rim * 2.2, 0.12, d - rim * 2.2]} />
+            <Mat color={tint} {...m} roughness={0.95} />
+          </mesh>
+          {/* Seau + pelle */}
+          <mesh position={[-w * 0.18, 0.22, d * 0.12]} castShadow>
+            <cylinderGeometry args={[0.07, 0.055, 0.12, 12]} />
+            <Mat color="#FF8B7B" {...m} />
+          </mesh>
+          <mesh position={[-w * 0.18, 0.3, d * 0.12]} castShadow>
+            <torusGeometry args={[0.05, 0.012, 8, 16]} />
+            <Mat color="#F0D040" {...m} />
+          </mesh>
+          <mesh
+            position={[w * 0.2, 0.18, -d * 0.1]}
+            rotation={[0.2, 0.4, 0.9]}
+            castShadow
+          >
+            <boxGeometry args={[0.14, 0.02, 0.04]} />
+            <Mat color="#70A0E0" {...m} />
+          </mesh>
+          <mesh
+            position={[w * 0.12, 0.2, -d * 0.05]}
+            rotation={[0.2, 0.4, 0.9]}
+            castShadow
+          >
+            <cylinderGeometry args={[0.01, 0.01, 0.18, 6]} />
+            <Mat color={OAK} {...m} />
+          </mesh>
+        </group>
+      )
+    }
+
+    case 'aquarium': {
+      return (
+        <group>
+          {/* Bac verre */}
+          <mesh position={[0, 0.22, 0]} castShadow>
+            <boxGeometry args={[0.36, 0.32, 0.22]} />
+            <Mat
+              color="#C8E8F8"
+              {...m}
+              opacity={Math.min(0.45, opacity * 0.55)}
+              roughness={0.12}
+              metalness={0.05}
+            />
+          </mesh>
+          {/* Eau */}
+          <mesh position={[0, 0.18, 0]} receiveShadow>
+            <boxGeometry args={[0.32, 0.2, 0.18]} />
+            <Mat color={tint} {...m} roughness={0.35} />
+          </mesh>
+          {/* Graviers */}
+          <mesh position={[0, 0.08, 0]} receiveShadow>
+            <boxGeometry args={[0.3, 0.04, 0.16]} />
+            <Mat color="#D4C4A0" {...m} roughness={0.95} />
+          </mesh>
+          {/* Plante aquatique */}
+          <mesh position={[-0.08, 0.18, 0.02]} castShadow>
+            <cylinderGeometry args={[0.008, 0.012, 0.16, 6]} />
+            <Mat color="#3A9E5A" {...m} />
+          </mesh>
+          <mesh position={[-0.08, 0.28, 0.02]} castShadow scale={[1, 0.6, 0.4]}>
+            <sphereGeometry args={[0.04, 8, 6]} />
+            <Mat color="#5ABA70" {...m} />
+          </mesh>
+          {/* Poisson */}
+          <mesh position={[0.06, 0.2, 0]} castShadow>
+            <sphereGeometry args={[0.035, 10, 8]} />
+            <Mat color="#FF8B50" {...m} />
+          </mesh>
+          <mesh
+            position={[0.1, 0.2, 0]}
+            rotation={[0, 0, Math.PI / 2]}
+            castShadow
+          >
+            <coneGeometry args={[0.025, 0.04, 6]} />
+            <Mat color="#FFB070" {...m} />
+          </mesh>
+          {/* Couvercle */}
+          <mesh position={[0, 0.39, 0]} castShadow>
+            <boxGeometry args={[0.38, 0.02, 0.24]} />
+            <Mat color={WHITE} {...m} />
           </mesh>
         </group>
       )

@@ -40,12 +40,18 @@ describe('preset furniture facing', () => {
   it('orients cuisine and bathroom storage into the room', () => {
     const cuisine = byId(createCuisineLayout())
     expect(cuisine['cuisine-fridge']).toBe(180)
-    expect(cuisine['cuisine-kitchen']).toBe(180)
+    expect(cuisine['cuisine-stove']).toBe(180)
+    expect(cuisine['cuisine-sink']).toBe(270)
     expect(cuisine['cuisine-cabinet']).toBe(270)
+    expect(cuisine['cuisine-kitchen']).toBe(180)
 
     const bath = byId(createBathroomLayout())
-    expect(bath['bath-washer']).toBe(180)
+    expect(bath['bath-toilet']).toBe(180)
+    expect(bath['bath-tub']).toBe(180)
+    expect(bath['bath-shower']).toBe(90)
+    expect(bath['bath-sink']).toBe(90)
     expect(bath['bath-mirror']).toBe(90)
+    expect(bath['bath-washer']).toBe(180)
   })
 })
 

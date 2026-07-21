@@ -91,6 +91,8 @@ export type PrimitiveKind =
   | 'gardenSwing'
   | 'miniTrampoline'
   | 'cloudShelf'
+  | 'sandBox'
+  | 'aquarium'
 
 export type CatalogItem = {
   id: string

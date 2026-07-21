@@ -46,6 +46,36 @@ describe('catalog', () => {
     expect(getCatalogItem('mushroom-lamp')?.nestable).toBe(true)
   })
 
+  it('includes bathroom and kitchen fixtures wave', () => {
+    const ids = [
+      'bathtub-blush',
+      'shower-sky',
+      'toilet-cream',
+      'sink-bathroom-mint',
+      'cabinet-bathroom-cream',
+      'mirror-bathroom',
+      'dryer-sky',
+      'washer-dryer-stack',
+      'stove-electric-pink',
+      'sink-kitchen-sky',
+      'fridge-tall-cream',
+      'kitchen-bar-oak',
+      'pillow-coral',
+      'pillow-long-cream',
+      'bed-double-blush',
+      'bear-honey',
+      'sandbox-garden',
+      'aquarium-sky',
+    ] as const
+    for (const id of ids) {
+      expect(getCatalogItem(id), `missing ${id}`).toBeDefined()
+    }
+    expect(getCatalogItem('sandbox-garden')?.outdoor).toBe(true)
+    expect(getCatalogItem('pillow-coral')?.nestable).toBe(true)
+    expect(getCatalogItem('aquarium-sky')?.nestable).toBe(true)
+    expect(getCatalogItem('bathtub-blush')?.surfaceHeight).toBeTypeOf('number')
+  })
+
   it('includes Louise hero set', () => {
     for (const id of HERO_IDS) {
       expect(getCatalogItem(id), `missing hero ${id}`).toBeDefined()

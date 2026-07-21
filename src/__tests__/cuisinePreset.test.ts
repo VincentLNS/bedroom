@@ -4,6 +4,7 @@ import {
   canPlace,
   cellsContainedIn,
   footprintCells,
+  isFloorUnderlay,
   itemFootprint,
   toFloorOccupied,
   toSurfaceOccupied,
@@ -50,7 +51,9 @@ describe('createCuisineLayout', () => {
           }),
           `${item.catalogId} @ (${item.cx},${item.cz}) rot ${item.rot}`,
         ).toBe(true)
-        floorOccupied.push({ instanceId: item.instanceId, cells })
+        if (!isFloorUnderlay(catalog)) {
+          floorOccupied.push({ instanceId: item.instanceId, cells })
+        }
       }
     }
   })

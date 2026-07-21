@@ -44,6 +44,8 @@ const STYLISH_KINDS = new Set<string>([
   'gardenSwing',
   'miniTrampoline',
   'cloudShelf',
+  'sandBox',
+  'aquarium',
 ])
 
 const ANIMAL_KINDS = new Set<string>([
