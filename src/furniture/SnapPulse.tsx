@@ -43,7 +43,7 @@ export function SnapPulse() {
     >
       <ringGeometry args={[0.12, 0.22, 32]} />
       <meshBasicMaterial
-        color={pulse.ok ? '#7ec8b3' : '#ff8b7b'}
+        color={pulse.ok ? '#f0a8c0' : '#ff8b7b'}
         transparent
         opacity={0.55}
         depthWrite={false}

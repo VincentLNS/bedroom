@@ -17,8 +17,8 @@ import {
   ROOM_WIDTH_M,
 } from './constants'
 
-const FLOOR_COLOR = '#e8d9c4'
-const WALL_COLOR = '#FFFFFF'
+const FLOOR_COLOR = '#f0e0d8'
+const WALL_COLOR = '#FFF8FA'
 const DOOR_WIDTH = DOOR_WIDTH_M
 const DOOR_HEIGHT = 2.1
 const WINDOW_WIDTH = 1.6
