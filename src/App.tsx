@@ -1,11 +1,16 @@
-import { useEffect } from 'react'
-import { BedroomScene } from './scene/BedroomScene'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import {
   fileToPlacedItems,
   loadFromLocalStorage,
   saveToLocalStorage,
   serializeLayout,
 } from './persist'
+import {
+  clearShareParamsFromUrl,
+  decodeShareToken,
+  readShareTokenFromLocation,
+} from './persist/shareLink'
 import { createLouiseLayout } from './presets/louise'
 import { useRoomStore, type ShadowQuality } from './store/roomStore'
 import type { ChallengeId } from './challenges/challenges'
@@ -13,14 +18,20 @@ import { ActionDock } from './ui/ActionDock'
 import { CataloguePanel } from './ui/CataloguePanel'
 import { SceneHud } from './ui/CoachTip'
 import { GestureCoach } from './ui/GestureCoach'
+import { LoadingSplash } from './ui/LoadingSplash'
 import { PhotoModeOverlay } from './ui/PhotoMode'
 import { RotateDial } from './ui/RotateDial'
 import { Toast } from './ui/Toast'
 import { TopBar } from './ui/TopBar'
 import './App.css'
 
+const BedroomScene = lazy(() =>
+  import('./scene/BedroomScene').then((m) => ({ default: m.BedroomScene })),
+)
+
 const AUTOSAVE_DEBOUNCE_MS = 300
 const PREFS_KEY = 'minideco-prefs-v1'
+const SPLASH_FALLBACK_MS = 8000
 
 type Prefs = {
   favorites?: string[]
@@ -62,6 +73,8 @@ export default function App() {
   const photoMode = useRoomStore((s) => s.photoMode)
   const bigFingers = useRoomStore((s) => s.bigFingers)
   const highContrast = useRoomStore((s) => s.highContrast)
+  const flashToast = useRoomStore((s) => s.flashToast)
+  const [sceneReady, setSceneReady] = useState(false)
 
   useEffect(() => {
     const prefs = loadPrefs()
@@ -74,15 +87,32 @@ export default function App() {
       highContrast: prefs.highContrast ?? false,
     })
 
-    const saved = loadFromLocalStorage()
-    if (saved) {
-      useRoomStore.getState().replaceLayout(fileToPlacedItems(saved))
-    } else if (useRoomStore.getState().items.length === 0) {
-      useRoomStore.getState().replaceLayout(createLouiseLayout())
+    let cancelled = false
+    const boot = async () => {
+      const token = readShareTokenFromLocation()
+      if (token) {
+        const decoded = await decodeShareToken(token)
+        if (cancelled) return
+        if (decoded.ok) {
+          useRoomStore.getState().replaceLayout(fileToPlacedItems(decoded.file))
+          clearShareParamsFromUrl()
+          flashToast('Chambre ouverte depuis un lien !', 'ok')
+          return
+        }
+        flashToast(decoded.error, 'error')
+        clearShareParamsFromUrl()
+      }
+
+      const saved = loadFromLocalStorage()
+      if (saved) {
+        useRoomStore.getState().replaceLayout(fileToPlacedItems(saved))
+      } else if (useRoomStore.getState().items.length === 0) {
+        useRoomStore.getState().replaceLayout(createLouiseLayout())
+      }
     }
+    void boot()
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined
-
     const unsubscribe = useRoomStore.subscribe((state, prevState) => {
       if (state.items !== prevState.items) {
         if (timeoutId !== undefined) clearTimeout(timeoutId)
@@ -104,9 +134,15 @@ export default function App() {
     })
 
     return () => {
+      cancelled = true
       if (timeoutId !== undefined) clearTimeout(timeoutId)
       unsubscribe()
     }
+  }, [flashToast])
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setSceneReady(true), SPLASH_FALLBACK_MS)
+    return () => window.clearTimeout(t)
   }, [])
 
   useEffect(() => {
@@ -147,12 +183,15 @@ export default function App() {
 
   return (
     <div className={appClass}>
+      <LoadingSplash ready={sceneReady} />
       <TopBar />
       <div className="workspace">
         {!photoMode && <CataloguePanel />}
         <main className="scene-host">
           <SceneHud />
-          <BedroomScene />
+          <Suspense fallback={null}>
+            <BedroomScene onReady={() => setSceneReady(true)} />
+          </Suspense>
           <ActionDock />
           <RotateDial />
           <Toast />
@@ -160,6 +199,7 @@ export default function App() {
         </main>
       </div>
       {!photoMode && <GestureCoach />}
+      <Analytics />
     </div>
   )
 }

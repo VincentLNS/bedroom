@@ -9,11 +9,11 @@ export function SceneLights() {
   return (
     <>
       {/* Softer ambient so materials (metal/glass/fabric) actually read */}
-      <ambientLight intensity={0.38} color="#fff8f0" />
-      <hemisphereLight args={['#e8f4ff', '#e8d8c8', 0.62]} />
+      <ambientLight intensity={0.42} color="#fff8f0" />
+      <hemisphereLight args={['#e8f4ff', '#e8d8c8', 0.68]} />
       <directionalLight
         position={[4.2, 8.5, 3.2]}
-        intensity={1.15}
+        intensity={1.22}
         color="#fffef8"
         castShadow={shadowsOn}
         shadow-mapSize-width={mapSize}

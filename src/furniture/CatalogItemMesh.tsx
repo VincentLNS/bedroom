@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import type { CatalogItem } from '../catalog'
 import { KenneyFurniture } from './KenneyFurniture'
+import { MeshErrorBoundary } from './MeshErrorBoundary'
 import { PrimitiveFurniture } from './PrimitiveFurniture'
 
 /** Renders whichever visual the catalogue item declares. */
@@ -37,16 +38,18 @@ export function CatalogItemMesh({
 
   if (visual.type === 'kenney') {
     return (
-      <Suspense fallback={fallback}>
-        <KenneyFurniture
-          model={visual.model}
-          footprint={item.footprint}
-          tint={tint}
-          surfaceHeight={item.surfaceHeight}
-          opacity={opacity}
-          selected={selected}
-        />
-      </Suspense>
+      <MeshErrorBoundary fallback={fallback}>
+        <Suspense fallback={fallback}>
+          <KenneyFurniture
+            model={visual.model}
+            footprint={item.footprint}
+            tint={tint}
+            surfaceHeight={item.surfaceHeight}
+            opacity={opacity}
+            selected={selected}
+          />
+        </Suspense>
+      </MeshErrorBoundary>
     )
   }
 

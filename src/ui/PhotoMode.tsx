@@ -1,7 +1,35 @@
 import { captureScenePng } from '../scene/capture'
 import { useRoomStore } from '../store/roomStore'
 
-/** HUD overlay for photo mode — frame + download PNG. */
+async function sharePng(dataUrl: string): Promise<boolean> {
+  try {
+    const res = await fetch(dataUrl)
+    const blob = await res.blob()
+    const file = new File([blob], `mini-deco-${Date.now()}.png`, {
+      type: 'image/png',
+    })
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Mini Déco',
+        text: 'Ma chambre Mini Déco ✨',
+      })
+      return true
+    }
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') return false
+  }
+  return false
+}
+
+function downloadPng(dataUrl: string) {
+  const link = document.createElement('a')
+  link.download = `mini-deco-${Date.now()}.png`
+  link.href = dataUrl
+  link.click()
+}
+
+/** HUD overlay for photo mode — frame + download / share PNG. */
 export function PhotoModeOverlay() {
   const photoMode = useRoomStore((s) => s.photoMode)
   const setPhotoMode = useRoomStore((s) => s.setPhotoMode)
@@ -10,18 +38,29 @@ export function PhotoModeOverlay() {
 
   if (!photoMode) return null
 
-  const capture = () => {
+  const finish = (msg: string) => {
+    markChallengeDone('photo-smile')
+    flashToast(msg, 'ok')
+  }
+
+  const capture = async (mode: 'save' | 'share') => {
     const url = captureScenePng()
     if (!url) {
       flashToast('Impossible de capturer', 'error')
       return
     }
-    const link = document.createElement('a')
-    link.download = `mini-deco-${Date.now()}.png`
-    link.href = url
-    link.click()
-    markChallengeDone('photo-smile')
-    flashToast('Photo enregistrée !', 'ok')
+    if (mode === 'share') {
+      const shared = await sharePng(url)
+      if (shared) {
+        finish('Photo envoyée !')
+        return
+      }
+      downloadPng(url)
+      finish('Photo enregistrée (partage indisponible)')
+      return
+    }
+    downloadPng(url)
+    finish('Photo enregistrée !')
   }
 
   return (
@@ -37,8 +76,15 @@ export function PhotoModeOverlay() {
         </button>
         <button
           type="button"
+          className="top-bar-btn"
+          onClick={() => void capture('share')}
+        >
+          Envoyer
+        </button>
+        <button
+          type="button"
           className="top-bar-btn top-bar-btn--primary"
-          onClick={capture}
+          onClick={() => void capture('save')}
         >
           Enregistrer
         </button>

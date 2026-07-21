@@ -47,8 +47,10 @@ const LOUISE_SLOTS: LouiseSlot[] = [
     parentId: 'louise-bed',
   },
   { id: 'louise-lamp-floor', catalogId: 'floor-lamp-cream', cx: 7, cz: 2 },
+  { id: 'louise-nightlight', catalogId: 'night-light-moon', cx: 5, cz: 3 },
   { id: 'louise-rattan', catalogId: 'chair-rattan-child', cx: 4, cz: 7 },
-  { id: 'louise-basket-1', catalogId: 'basket-wicker-pompom', cx: 5, cz: 8 },
+  { id: 'louise-pouf', catalogId: 'pouf-pink', cx: 3, cz: 7 },
+  { id: 'louise-basket-1', catalogId: 'basket-wicker-pompom', cx: 5, cz: 9 },
 
   // ── Mur fenêtre (+Z) : bureau ─────────────────────────────
   { id: 'louise-desk', catalogId: 'desk-louise', cx: 1, cz: 10, rot: 0 },

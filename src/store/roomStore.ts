@@ -321,10 +321,11 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       const challengesDone = [...state.challengesDone, id]
       const challenge = CHALLENGES.find((c) => c.id === id)
       if (challenge) {
+        const stars = '★'.repeat(challenge.stars)
         return {
           challengesDone,
           toast: {
-            message: `Défi réussi : ${challenge.title}`,
+            message: `${stars} Défi réussi : ${challenge.title}`,
             tone: 'ok' as const,
             id: Date.now(),
           },

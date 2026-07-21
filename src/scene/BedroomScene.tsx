@@ -13,7 +13,11 @@ import { PlacementController } from './PlacementController'
 import { SceneCameraControls } from './SceneCameraControls'
 import { GlCaptureBridge } from './GlCaptureBridge'
 
-export function BedroomScene() {
+type Props = {
+  onReady?: () => void
+}
+
+export function BedroomScene({ onReady }: Props) {
   const showGrid = useRoomStore((s) => s.showGrid)
   const shadowQuality = useRoomStore((s) => s.shadowQuality)
 
@@ -23,9 +27,13 @@ export function BedroomScene() {
       dpr={shadowQuality === 'off' ? [1, 1.25] : [1, 2]}
       camera={{ position: [3.6, 3.8, 5.2], fov: 40, near: 0.1, far: 80 }}
       gl={{ preserveDrawingBuffer: true }}
+      onCreated={() => {
+        // Let materials/HDR settle one frame before dismissing splash.
+        requestAnimationFrame(() => onReady?.())
+      }}
     >
       <color attach="background" args={['#c8e0f0']} />
-      <fog attach="fog" args={['#c8e0f0', 22, 48]} />
+      <fog attach="fog" args={['#c8e0f0', 24, 52]} />
       <SceneLights />
       <AtelierStage />
       <OutdoorScenery />

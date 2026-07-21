@@ -1163,6 +1163,111 @@
   color: var(--mint-deep);
 }
 
+.challenges-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.challenges-header .challenges-title {
+  margin: 0;
+}
+
+.challenges-stars {
+  letter-spacing: 0.05em;
+  font-size: 0.95rem;
+}
+
+.challenges-star {
+  color: color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.challenges-star--on {
+  color: #e8a820;
+}
+
+.challenges-item-stars {
+  color: #e8a820;
+  font-size: 0.85em;
+}
+
+/* ── Loading splash ──────────────────────────────────────── */
+
+.loading-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 12% 18%, #ffe9a8 0, transparent 28%),
+    radial-gradient(circle at 88% 12%, #b8ebe0 0, transparent 26%),
+    radial-gradient(circle at 70% 88%, #ffd0c8 0, transparent 30%),
+    linear-gradient(165deg, #eaf8fb 0%, #fff6e8 48%, #e8f6ef 100%);
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.loading-splash--out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loading-splash-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 1.4rem 1.6rem;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 253, 247, 0.92);
+  border: 3px solid var(--ink);
+  box-shadow: var(--shadow);
+  min-width: min(280px, 86vw);
+}
+
+.loading-splash-badge {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 30% 70% 55% 45% / 45% 40% 60% 55%;
+  background: linear-gradient(145deg, var(--sun), #ffb84d);
+  border: 3px solid var(--ink);
+  animation: badge-wiggle 2.2s ease-in-out infinite;
+}
+
+.loading-splash-brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 800;
+}
+
+.loading-splash-msg {
+  margin: 0;
+  color: var(--ink-soft);
+  font-weight: 700;
+  text-align: center;
+}
+
+.loading-splash-bar {
+  width: 100%;
+  height: 0.55rem;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mint) 22%, white);
+  overflow: hidden;
+  border: 2px solid color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.loading-splash-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--mint), var(--sun));
+  transition: width 0.2s ease;
+}
+
 /* ── Comfort modes ───────────────────────────────────────── */
 
 .app--big-fingers {

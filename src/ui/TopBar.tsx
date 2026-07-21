@@ -5,7 +5,15 @@ import {
   readBedroomFile,
   serializeLayout,
 } from '../persist'
+import {
+  deleteCloudSave,
+  listCloudSaves,
+  loadCloudSave,
+  saveToCloud,
+} from '../persist/cloudSaves'
+import { buildShareUrl, shareOrCopyUrl } from '../persist/shareLink'
 import { createLouiseLayout } from '../presets/louise'
+import { createSalonLayout } from '../presets/salon'
 import { useRoomStore, type WallMode } from '../store/roomStore'
 import { CoachTip } from './CoachTip'
 import { useCoarsePointer } from './useCoarsePointer'
@@ -49,6 +57,8 @@ export function TopBar() {
   const setBigFingers = useRoomStore((s) => s.setBigFingers)
   const highContrast = useRoomStore((s) => s.highContrast)
   const setHighContrast = useRoomStore((s) => s.setHighContrast)
+  const flashToast = useRoomStore((s) => s.flashToast)
+  const markChallengeDone = useRoomStore((s) => s.markChallengeDone)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const coarse = useCoarsePointer()
   const [moreOpen, setMoreOpen] = useState(false)
@@ -147,6 +157,98 @@ export function TopBar() {
       select(null)
       setMoreOpen(false)
     }
+  }
+
+  const handleSalonPreset = () => {
+    if (
+      window.confirm(
+        'On charge le modèle « Salon cosy » ? Tes meubles actuels seront remplacés.',
+      )
+    ) {
+      clearImportWarnings()
+      replaceLayout(createSalonLayout())
+      clearPending()
+      select(null)
+      setMoreOpen(false)
+    }
+  }
+
+  const handleShareLink = async () => {
+    try {
+      const url = await buildShareUrl(serializeLayout(items))
+      const result = await shareOrCopyUrl(url)
+      if (result === 'shared' || result === 'copied') {
+        markChallengeDone('share-room')
+        flashToast(
+          result === 'shared' ? 'Lien partagé !' : 'Lien copié !',
+          'ok',
+        )
+      } else {
+        flashToast('Impossible de partager le lien', 'error')
+      }
+    } catch {
+      flashToast('Lien trop long — retire des meubles', 'error')
+    }
+    setMoreOpen(false)
+  }
+
+  const handleCloudSave = () => {
+    const name =
+      window.prompt('Nom de la sauvegarde cloud (sur cet appareil) ?', 'Ma chambre') ??
+      ''
+    if (!name.trim()) return
+    saveToCloud(name, serializeLayout(items))
+    flashToast('Sauvegardé dans le cloud local', 'ok')
+    setMoreOpen(false)
+  }
+
+  const handleCloudLoad = () => {
+    const saves = listCloudSaves()
+    if (saves.length === 0) {
+      flashToast('Aucune sauvegarde cloud', 'info')
+      return
+    }
+    const list = saves
+      .map(
+        (s, i) =>
+          `${i + 1}. ${s.name} (${new Date(s.savedAt).toLocaleDateString('fr-FR')})`,
+      )
+      .join('\n')
+    const pick = window.prompt(
+      `Quelle sauvegarde ouvrir ?\n${list}\n\nNuméro :`,
+      '1',
+    )
+    const index = Number(pick) - 1
+    const save = saves[index]
+    if (!save) return
+    if (
+      !window.confirm(
+        `Ouvrir « ${save.name} » ? Tes meubles actuels seront remplacés.`,
+      )
+    ) {
+      return
+    }
+    const loaded = loadCloudSave(save.id)
+    if (!loaded) return
+    clearImportWarnings()
+    replaceLayout(fileToPlacedItems(loaded.file))
+    flashToast('Sauvegarde ouverte', 'ok')
+    setMoreOpen(false)
+  }
+
+  const handleCloudDelete = () => {
+    const saves = listCloudSaves()
+    if (saves.length === 0) {
+      flashToast('Aucune sauvegarde cloud', 'info')
+      return
+    }
+    const list = saves.map((s, i) => `${i + 1}. ${s.name}`).join('\n')
+    const pick = window.prompt(`Supprimer quelle sauvegarde ?\n${list}\n\nNuméro :`)
+    const index = Number(pick) - 1
+    const save = saves[index]
+    if (!save) return
+    deleteCloudSave(save.id)
+    flashToast('Sauvegarde supprimée', 'info')
   }
 
   const handleExport = () => {
@@ -263,6 +365,23 @@ export function TopBar() {
     <>
       <button type="button" className="top-bar-btn" onClick={handleEmptyPreset}>
         Chambre vide
+      </button>
+      <button
+        type="button"
+        className="top-bar-btn top-bar-btn--primary"
+        onClick={() => void handleShareLink()}
+        title="Copie ou envoie un lien vers ta chambre"
+      >
+        Lien
+      </button>
+      <button type="button" className="top-bar-btn" onClick={handleCloudSave}>
+        Cloud ↓
+      </button>
+      <button type="button" className="top-bar-btn" onClick={handleCloudLoad}>
+        Cloud ↑
+      </button>
+      <button type="button" className="top-bar-btn" onClick={handleCloudDelete}>
+        Cloud ✕
       </button>
       <button type="button" className="top-bar-btn" onClick={handleExport}>
         Sauver
@@ -400,6 +519,9 @@ export function TopBar() {
             onClick={handleLouisePreset}
           >
             Modèle Louise
+          </button>
+          <button type="button" className="top-bar-btn" onClick={handleSalonPreset}>
+            Salon cosy
           </button>
           {coarse ? (
             <div className="top-bar-more">
