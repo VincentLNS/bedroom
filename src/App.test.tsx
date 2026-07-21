@@ -138,6 +138,8 @@ describe('App', () => {
     expect(
       useRoomStore.getState().items.some((item) => item.catalogId === 'bed-louise'),
     ).toBe(true)
+    // Presets must not auto-complete décor challenges on first boot.
+    expect(useRoomStore.getState().challengesDone).toEqual([])
   })
 
   it('arms place mode when a catalogue card is clicked', () => {
@@ -253,5 +255,73 @@ describe('App', () => {
       expect(useRoomStore.getState().items).toHaveLength(0)
       expect(useRoomStore.getState().selectedId).toBeNull()
     })
+  })
+
+  it('switches rooms from the house switcher', async () => {
+    render(<App />)
+    await vi.waitFor(() => {
+      expect(useRoomStore.getState().items.length).toBeGreaterThan(0)
+    })
+    expect(useRoomStore.getState().activeRoom).toBe('bedroom')
+    fireEvent.click(screen.getByRole('button', { name: 'Cuisine' }))
+    expect(useRoomStore.getState().activeRoom).toBe('cuisine')
+    fireEvent.click(screen.getByRole('button', { name: 'Salle de bain' }))
+    expect(useRoomStore.getState().activeRoom).toBe('bathroom')
+  })
+
+  it('opens a gallery preset into the target room', async () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Modèles' }))
+    expect(await screen.findByRole('dialog', { name: 'Modèles' })).toBeTruthy()
+    const gallery = screen.getByRole('dialog', { name: 'Modèles' })
+    const opens = gallery.querySelectorAll('button')
+    const bathroomOpen = [...opens].find(
+      (b) =>
+        b.textContent === 'Ouvrir' &&
+        b.closest('.gallery-card')?.textContent?.includes('Salle de bain'),
+    )
+    expect(bathroomOpen).toBeTruthy()
+    fireEvent.click(bathroomOpen!)
+    const confirm = await screen.findByRole('dialog', {
+      name: /Ouvrir « Salle de bain »/,
+    })
+    fireEvent.click(
+      [...confirm.querySelectorAll('button')].find(
+        (b) => b.textContent === 'Ouvrir',
+      )!,
+    )
+    await vi.waitFor(() => {
+      expect(useRoomStore.getState().activeRoom).toBe('bathroom')
+      expect(
+        useRoomStore
+          .getState()
+          .items.some((i) => i.catalogId === 'bathtub-blush'),
+      ).toBe(true)
+    })
+  })
+
+  it('blocks gallery apply when parent lock is on', async () => {
+    localStorage.setItem(
+      'minideco-prefs-v1',
+      JSON.stringify({ parentLock: true }),
+    )
+    render(<App />)
+    await vi.waitFor(() => {
+      expect(useRoomStore.getState().parentLock).toBe(true)
+    })
+    const before = useRoomStore.getState().items.map((i) => i.instanceId)
+    fireEvent.click(screen.getByRole('button', { name: 'Modèles' }))
+    expect(await screen.findByRole('dialog', { name: 'Modèles' })).toBeTruthy()
+    const gallery = screen.getByRole('dialog', { name: 'Modèles' })
+    const firstOpen = [...gallery.querySelectorAll('button')].find(
+      (b) => b.textContent === 'Ouvrir',
+    )
+    fireEvent.click(firstOpen!)
+    await vi.waitFor(() => {
+      expect(useRoomStore.getState().toast?.message).toMatch(/verrou/i)
+    })
+    expect(useRoomStore.getState().items.map((i) => i.instanceId)).toEqual(
+      before,
+    )
   })
 })

@@ -8,6 +8,7 @@ import {
 import {
   decodeShareToken,
   encodeShareToken,
+  readShareTokenFromUrl,
 } from '../persist/shareLink'
 import { emptyHouseRooms } from '../house/rooms'
 
@@ -51,5 +52,15 @@ describe('shareLink', () => {
     expect(decoded.file.rooms.salon.length).toBe(rooms.salon.length)
     expect(decoded.file.rooms.cuisine.length).toBe(rooms.cuisine.length)
     expect(decoded.file.rooms.bathroom.length).toBe(rooms.bathroom.length)
+  })
+
+  it('reads share token from query or hash URLs', () => {
+    expect(
+      readShareTokenFromUrl('https://example.com/app?r=zabc123'),
+    ).toBe('zabc123')
+    expect(
+      readShareTokenFromUrl('https://example.com/app#r=jhello'),
+    ).toBe('jhello')
+    expect(readShareTokenFromUrl('https://example.com/app')).toBeNull()
   })
 })

@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react'
-import { serializeLayout } from '../persist'
-import { buildShareUrl, copyText } from '../persist/shareLink'
+import { houseFileToRooms, serializeLayout } from '../persist'
+import {
+  buildShareUrl,
+  copyText,
+  decodeShareToken,
+  readShareTokenFromUrl,
+} from '../persist/shareLink'
 import { createBathroomLayout } from '../presets/bathroom'
 import { createCuisineLayout } from '../presets/cuisine'
 import { createHallLayout } from '../presets/hall'
@@ -93,9 +98,11 @@ type Props = {
 
 export function GalleryModal({ open, onClose }: Props) {
   const replaceLayout = useRoomStore((s) => s.replaceLayout)
+  const replaceHouse = useRoomStore((s) => s.replaceHouse)
   const setActiveRoom = useRoomStore((s) => s.setActiveRoom)
   const items = useRoomStore((s) => s.items)
   const flashToast = useRoomStore((s) => s.flashToast)
+  const parentLock = useRoomStore((s) => s.parentLock)
   const markChallengeDone = useRoomStore((s) => s.markChallengeDone)
   const [published, setPublished] = useState(loadPublished)
 
@@ -104,6 +111,10 @@ export function GalleryModal({ open, onClose }: Props) {
   if (!open) return null
 
   const openEntry = async (entry: GalleryEntry) => {
+    if (parentLock) {
+      flashToast('Verrou parent : modèles verrouillés', 'error')
+      return
+    }
     const ok = await askConfirm({
       title: `Ouvrir « ${entry.title} » ?`,
       message: `Dans la pièce ${entry.room}. Les meubles de cette pièce seront remplacés.`,
@@ -113,6 +124,39 @@ export function GalleryModal({ open, onClose }: Props) {
     setActiveRoom(entry.room)
     replaceLayout(entry.build())
     flashToast(`Modèle : ${entry.title}`, 'ok')
+    onClose()
+  }
+
+  const openSouvenir = async (entry: Published) => {
+    if (parentLock) {
+      flashToast('Verrou parent : modèles verrouillés', 'error')
+      return
+    }
+    const token = readShareTokenFromUrl(entry.shareUrl)
+    if (!token) {
+      flashToast('Lien souvenir invalide', 'error')
+      return
+    }
+    const decoded = await decodeShareToken(token)
+    if (!decoded.ok) {
+      flashToast(decoded.error, 'error')
+      return
+    }
+    const ok = await askConfirm({
+      title: `Ouvrir « ${entry.title} » ?`,
+      message:
+        decoded.kind === 'house'
+          ? 'Toute la maison actuelle sera remplacée.'
+          : 'La pièce active du souvenir remplacera celle de la maison.',
+      confirmLabel: 'Ouvrir',
+      danger: true,
+    })
+    if (!ok) return
+    replaceHouse(houseFileToRooms(decoded.file), decoded.file.activeRoom)
+    if (decoded.file.title) {
+      useRoomStore.getState().setRoomTitle(decoded.file.title)
+    }
+    flashToast(`Souvenir : ${entry.title}`, 'ok')
     onClose()
   }
 
@@ -179,7 +223,9 @@ export function GalleryModal({ open, onClose }: Props) {
 
         <h3 className="gallery-section-title">Sur cet appareil</h3>
         {published.length === 0 ? (
-          <p className="magic-modal-hint">Pas encore de souvenir enregistré ici.</p>
+          <p className="magic-modal-hint">
+            Pas encore de souvenir enregistré ici.
+          </p>
         ) : (
           <ul className="gallery-list">
             {published.map((p) => (
@@ -190,16 +236,25 @@ export function GalleryModal({ open, onClose }: Props) {
                     {new Date(p.savedAt).toLocaleString('fr-FR')}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="top-bar-btn"
-                  onClick={async () => {
-                    await copyText(p.shareUrl)
-                    flashToast('Lien copié', 'ok')
-                  }}
-                >
-                  Lien
-                </button>
+                <div className="gallery-card-actions">
+                  <button
+                    type="button"
+                    className="top-bar-btn top-bar-btn--primary"
+                    onClick={() => void openSouvenir(p)}
+                  >
+                    Ouvrir
+                  </button>
+                  <button
+                    type="button"
+                    className="top-bar-btn"
+                    onClick={async () => {
+                      await copyText(p.shareUrl)
+                      flashToast('Lien copié', 'ok')
+                    }}
+                  >
+                    Lien
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

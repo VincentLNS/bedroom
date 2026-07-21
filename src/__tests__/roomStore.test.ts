@@ -3,6 +3,17 @@ import { useRoomStore } from '../store/roomStore'
 
 describe('roomStore', () => {
   beforeEach(() => {
+    useRoomStore.setState({
+      parentLock: false,
+      undoStack: [],
+      redoStack: [],
+      toast: null,
+      soundOn: true,
+      musicOn: false,
+      roomTitle: 'Chambre de Louise',
+      challengesDone: [],
+      activeRoom: 'bedroom',
+    })
     useRoomStore.getState().clearRoom()
     useRoomStore.getState().clearPending()
     useRoomStore.getState().select(null)
@@ -12,15 +23,6 @@ describe('roomStore', () => {
     useRoomStore.getState().setViewMode('dollhouse')
     useRoomStore.getState().setShowGrid(true)
     useRoomStore.getState().setWallsAutoHide(true)
-    useRoomStore.setState({
-      undoStack: [],
-      redoStack: [],
-      toast: null,
-      parentLock: false,
-      soundOn: true,
-      musicOn: false,
-      roomTitle: 'Chambre de Louise',
-    })
   })
 
   it('places an item when free', () => {
@@ -224,7 +226,7 @@ describe('roomStore', () => {
     expect(useRoomStore.getState().challengesDone).toContain('cat-garden')
   })
 
-  it('parent lock blocks armPlace and clearRoom', () => {
+  it('parent lock blocks armPlace, clearRoom, delete, move, replaceLayout', () => {
     useRoomStore.getState().setParentLock(true)
     useRoomStore.getState().armPlace('bed-louise')
     expect(useRoomStore.getState().pendingCatalogId).toBeNull()
@@ -232,9 +234,40 @@ describe('roomStore', () => {
 
     useRoomStore.getState().setParentLock(false)
     expect(useRoomStore.getState().place('lightbox-louise', 5, 5, 0)).toBe(true)
+    const id = useRoomStore.getState().items[0].instanceId
+    useRoomStore.getState().select(id)
+
     useRoomStore.getState().setParentLock(true)
     useRoomStore.getState().clearRoom()
     expect(useRoomStore.getState().items).toHaveLength(1)
+
+    useRoomStore.getState().deleteSelected()
+    expect(useRoomStore.getState().items).toHaveLength(1)
+
+    expect(useRoomStore.getState().move(id, 4, 5)).toBe(false)
+    expect(useRoomStore.getState().items[0].cx).toBe(5)
+
+    useRoomStore.getState().replaceLayout([])
+    expect(useRoomStore.getState().items).toHaveLength(1)
+  })
+
+  it('replaceLayout does not auto-complete décor challenges', () => {
+    useRoomStore.setState({ challengesDone: [], parentLock: false })
+    useRoomStore.getState().replaceLayout(
+      // Louise-like: garden cat would complete cat-garden if we refreshed
+      [
+        {
+          instanceId: 'c1',
+          catalogId: 'cat-devon-rex',
+          cx: -2,
+          cz: 5,
+          rot: 0,
+        },
+      ],
+    )
+    expect(useRoomStore.getState().challengesDone).not.toContain('cat-garden')
+    expect(useRoomStore.getState().place('cat-devon-rex', -1, 5, 0)).toBe(true)
+    expect(useRoomStore.getState().challengesDone).toContain('cat-garden')
   })
 
   it('renames room title with fallback', () => {

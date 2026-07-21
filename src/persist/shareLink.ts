@@ -112,9 +112,9 @@ export async function buildShareUrl(payload: SharePayload): Promise<string> {
   return url.toString()
 }
 
-export function readShareTokenFromLocation(): string | null {
+export function readShareTokenFromUrl(href: string): string | null {
   try {
-    const url = new URL(window.location.href)
+    const url = new URL(href)
     const fromQuery = url.searchParams.get(SHARE_PARAM)
     if (fromQuery) return fromQuery
     const hash = url.hash.replace(/^#/, '')
@@ -125,6 +125,14 @@ export function readShareTokenFromLocation(): string | null {
     /* ignore */
   }
   return null
+}
+
+export function readShareTokenFromLocation(): string | null {
+  try {
+    return readShareTokenFromUrl(window.location.href)
+  } catch {
+    return null
+  }
 }
 
 export function clearShareParamsFromUrl() {

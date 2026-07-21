@@ -119,7 +119,8 @@ function DoorPortal({ portal }: { portal: Portal }) {
     setActiveRoom(portal.to)
   }
 
-  const showLabel = !phone && (showDoorLabels || hover)
+  // Sur téléphone : uniquement si « Noms portes » est activé (pas au survol).
+  const showLabel = showDoorLabels || (!phone && hover)
 
   return (
     <group

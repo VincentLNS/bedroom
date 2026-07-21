@@ -11,6 +11,9 @@ import {
   loadCloudSave,
   saveToCloud,
 } from '../persist/cloudSaves'
+import { createBathroomLayout } from '../presets/bathroom'
+import { createCuisineLayout } from '../presets/cuisine'
+import { createHallLayout } from '../presets/hall'
 import { createLouiseLayout } from '../presets/louise'
 import { createSalonLayout } from '../presets/salon'
 import {
@@ -20,8 +23,10 @@ import {
 import { useRoomStore } from '../store/roomStore'
 import { askAlert, askConfirm, askPick, askPrompt } from './dialogStore'
 import {
+  changeParentPin,
   disableParentLockWithPin,
   enableParentLockWithPin,
+  resetParentPin,
 } from './parentGate'
 import { exportSouvenirPdf } from './souvenirPdf'
 
@@ -38,6 +43,7 @@ export function ParentDrawer({ open, onClose, onOpenCoPlay }: Props) {
   const select = useRoomStore((s) => s.select)
   const replaceLayout = useRoomStore((s) => s.replaceLayout)
   const replaceHouse = useRoomStore((s) => s.replaceHouse)
+  const setActiveRoom = useRoomStore((s) => s.setActiveRoom)
   const clearImportWarnings = useRoomStore((s) => s.clearImportWarnings)
   const setRoomTitle = useRoomStore((s) => s.setRoomTitle)
   const flashToast = useRoomStore((s) => s.flashToast)
@@ -60,6 +66,29 @@ export function ParentDrawer({ open, onClose, onOpenCoPlay }: Props) {
     select(null)
   }
 
+  const applyPreset = async (
+    title: string,
+    message: string,
+    room: 'bedroom' | 'salon' | 'hall' | 'cuisine' | 'bathroom',
+    build: () => ReturnType<typeof createLouiseLayout>,
+  ) => {
+    if (parentLock) {
+      flashToast('Verrou parent : modèles verrouillés', 'error')
+      return
+    }
+    const ok = await askConfirm({
+      title,
+      message,
+      confirmLabel: 'Charger',
+    })
+    if (!ok) return
+    clearImportWarnings()
+    setActiveRoom(room)
+    replaceLayout(build())
+    clearPending()
+    select(null)
+  }
+
   const handleEmpty = async () => {
     if (parentLock) {
       flashToast('Verrou parent : impossible de vider', 'error')
@@ -76,40 +105,6 @@ export function ParentDrawer({ open, onClose, onOpenCoPlay }: Props) {
     clearPending()
     select(null)
     flashToast('Pièce vide', 'info')
-  }
-
-  const handleLouise = async () => {
-    if (parentLock) {
-      flashToast('Verrou parent : modèles verrouillés', 'error')
-      return
-    }
-    const ok = await askConfirm({
-      title: 'Modèle Louise ?',
-      message: 'Remplace les meubles de la pièce active par la chambre de Louise.',
-      confirmLabel: 'Charger',
-    })
-    if (!ok) return
-    clearImportWarnings()
-    replaceLayout(createLouiseLayout())
-    clearPending()
-    select(null)
-  }
-
-  const handleSalon = async () => {
-    if (parentLock) {
-      flashToast('Verrou parent : modèles verrouillés', 'error')
-      return
-    }
-    const ok = await askConfirm({
-      title: 'Salon cosy ?',
-      message: 'Remplace les meubles de la pièce active par le salon cosy.',
-      confirmLabel: 'Charger',
-    })
-    if (!ok) return
-    clearImportWarnings()
-    replaceLayout(createSalonLayout())
-    clearPending()
-    select(null)
   }
 
   const handleDeviceSave = async () => {
@@ -196,7 +191,9 @@ export function ParentDrawer({ open, onClose, onOpenCoPlay }: Props) {
     fileInputRef.current?.click()
   }
 
-  const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportFile = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
@@ -253,20 +250,102 @@ export function ParentDrawer({ open, onClose, onOpenCoPlay }: Props) {
           >
             {parentLock ? 'Verrou activé' : 'Activer le verrou'}
           </button>
+          <button
+            type="button"
+            className="top-bar-btn"
+            onClick={() => void changeParentPin()}
+          >
+            Changer le code
+          </button>
+          <button
+            type="button"
+            className="top-bar-btn"
+            onClick={() => void resetParentPin()}
+          >
+            Effacer le code
+          </button>
           <span className="parent-drawer-note">
-            Bloque la boîte à meubles et les modèles.
+            Bloque catalogue, modèles, déplacer et supprimer.
           </span>
         </div>
 
         <h3 className="gallery-section-title">Modèles</h3>
         <div className="parent-drawer-actions">
-          <button type="button" className="top-bar-btn top-bar-btn--primary" onClick={() => void handleLouise()}>
+          <button
+            type="button"
+            className="top-bar-btn top-bar-btn--primary"
+            onClick={() =>
+              void applyPreset(
+                'Modèle Louise ?',
+                'Remplace la chambre par le modèle Louise.',
+                'bedroom',
+                createLouiseLayout,
+              )
+            }
+          >
             Chambre Louise
           </button>
-          <button type="button" className="top-bar-btn" onClick={() => void handleSalon()}>
+          <button
+            type="button"
+            className="top-bar-btn"
+            onClick={() =>
+              void applyPreset(
+                'Salon cosy ?',
+                'Remplace le salon par le modèle cosy.',
+                'salon',
+                createSalonLayout,
+              )
+            }
+          >
             Salon cosy
           </button>
-          <button type="button" className="top-bar-btn" onClick={() => void handleEmpty()}>
+          <button
+            type="button"
+            className="top-bar-btn"
+            onClick={() =>
+              void applyPreset(
+                'Couloir d’entrée ?',
+                'Remplace le couloir par le modèle d’entrée.',
+                'hall',
+                createHallLayout,
+              )
+            }
+          >
+            Couloir
+          </button>
+          <button
+            type="button"
+            className="top-bar-btn"
+            onClick={() =>
+              void applyPreset(
+                'Cuisine rose ?',
+                'Remplace la cuisine par le modèle dinette.',
+                'cuisine',
+                createCuisineLayout,
+              )
+            }
+          >
+            Cuisine
+          </button>
+          <button
+            type="button"
+            className="top-bar-btn"
+            onClick={() =>
+              void applyPreset(
+                'Salle de bain ?',
+                'Remplace la salle de bain par le modèle pastel.',
+                'bathroom',
+                createBathroomLayout,
+              )
+            }
+          >
+            Salle de bain
+          </button>
+          <button
+            type="button"
+            className="top-bar-btn"
+            onClick={() => void handleEmpty()}
+          >
             Vider la pièce
           </button>
         </div>
@@ -276,19 +355,35 @@ export function ParentDrawer({ open, onClose, onOpenCoPlay }: Props) {
           Pas un vrai cloud : les saves restent sur cette tablette.
         </p>
         <div className="parent-drawer-actions">
-          <button type="button" className="top-bar-btn" onClick={() => void handleDeviceSave()}>
+          <button
+            type="button"
+            className="top-bar-btn"
+            onClick={() => void handleDeviceSave()}
+          >
             Sauver ici
           </button>
-          <button type="button" className="top-bar-btn" onClick={() => void handleDeviceLoad()}>
+          <button
+            type="button"
+            className="top-bar-btn"
+            onClick={() => void handleDeviceLoad()}
+          >
             Ouvrir ici
           </button>
-          <button type="button" className="top-bar-btn" onClick={() => void handleDeviceDelete()}>
+          <button
+            type="button"
+            className="top-bar-btn"
+            onClick={() => void handleDeviceDelete()}
+          >
             Effacer save
           </button>
           <button type="button" className="top-bar-btn" onClick={handleExport}>
             Exporter fichier
           </button>
-          <button type="button" className="top-bar-btn" onClick={handleImportClick}>
+          <button
+            type="button"
+            className="top-bar-btn"
+            onClick={handleImportClick}
+          >
             Importer fichier
           </button>
         </div>
@@ -304,7 +399,9 @@ export function ParentDrawer({ open, onClose, onOpenCoPlay }: Props) {
           </button>
           <button
             type="button"
-            className={bigFingers ? 'top-bar-btn top-bar-btn--primary' : 'top-bar-btn'}
+            className={
+              bigFingers ? 'top-bar-btn top-bar-btn--primary' : 'top-bar-btn'
+            }
             onClick={() => setBigFingers(!bigFingers)}
           >
             Gros doigts
@@ -318,7 +415,11 @@ export function ParentDrawer({ open, onClose, onOpenCoPlay }: Props) {
           >
             Contraste
           </button>
-          <button type="button" className="top-bar-btn" onClick={() => void handleSouvenir()}>
+          <button
+            type="button"
+            className="top-bar-btn"
+            onClick={() => void handleSouvenir()}
+          >
             Souvenir PDF
           </button>
           <button
@@ -335,7 +436,11 @@ export function ParentDrawer({ open, onClose, onOpenCoPlay }: Props) {
         </div>
 
         <div className="magic-modal-actions">
-          <button type="button" className="top-bar-btn top-bar-btn--primary" onClick={onClose}>
+          <button
+            type="button"
+            className="top-bar-btn top-bar-btn--primary"
+            onClick={onClose}
+          >
             Fermer
           </button>
         </div>

@@ -361,7 +361,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     })
     get().flashToast(roomLabel(room), 'info')
     get().requestCameraHome()
-    get().refreshChallenges()
+    // Ne pas évaluer les défis ici : les presets rempliraient tout au premier boot.
   },
 
   replaceHouse: (rooms, activeRoom = 'bedroom') => {
@@ -378,7 +378,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       redoStack: [],
       importWarnings: [],
     })
-    get().refreshChallenges()
+    // Import / boot / modèles : pas d’auto-complétion des défis.
   },
 
   flashToast: (message, tone = 'info') =>
@@ -484,6 +484,10 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   },
 
   place: (catalogId, cx, cz, rot) => {
+    if (get().parentLock) {
+      get().flashToast('Boîte verrouillée — mode parent', 'error')
+      return false
+    }
     const catalog = getCatalogItem(catalogId)
     if (!catalog) return false
 
@@ -510,6 +514,10 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   },
 
   move: (instanceId, cx, cz) => {
+    if (get().parentLock) {
+      get().flashToast('Boîte verrouillée — mode parent', 'error')
+      return false
+    }
     const item = get().items.find((i) => i.instanceId === instanceId)
     if (!item || item.locked) return false
 
@@ -559,6 +567,10 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   },
 
   rotateSelected: () => {
+    if (get().parentLock) {
+      get().flashToast('Boîte verrouillée — mode parent', 'error')
+      return false
+    }
     const { selectedId, items } = get()
     if (!selectedId) return false
     const item = items.find((i) => i.instanceId === selectedId)
@@ -581,6 +593,10 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   setPendingRot: (rot) => set({ pendingRot: rot }),
 
   deleteSelected: () => {
+    if (get().parentLock) {
+      get().flashToast('Boîte verrouillée — mode parent', 'error')
+      return
+    }
     const { selectedId, items } = get()
     if (!selectedId) return
     const item = items.find((i) => i.instanceId === selectedId)
@@ -602,6 +618,10 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   },
 
   duplicateSelected: () => {
+    if (get().parentLock) {
+      get().flashToast('Boîte verrouillée — mode parent', 'error')
+      return false
+    }
     const { selectedId, items } = get()
     if (!selectedId) return false
     const item = items.find((i) => i.instanceId === selectedId)
@@ -725,6 +745,10 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   },
 
   replaceLayout: (items) => {
+    if (get().parentLock) {
+      get().flashToast('Verrou parent : modèles verrouillés', 'error')
+      return
+    }
     const warnings: string[] = []
     const byId = new Set<string>()
     const valid = items.filter((item) => {
@@ -755,7 +779,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       undoStack: [],
       redoStack: [],
     })
-    get().refreshChallenges()
+    // Modèles / imports : pas d’auto-complétion des défis.
   },
 
   clearImportWarnings: () => set({ importWarnings: [] }),

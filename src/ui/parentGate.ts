@@ -90,3 +90,60 @@ export async function disableParentLockWithPin(): Promise<boolean> {
   useRoomStore.getState().setParentLock(false)
   return true
 }
+
+export function clearParentPin() {
+  try {
+    localStorage.removeItem(PIN_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Change PIN after confirming the current one (or set if none). */
+export async function changeParentPin(): Promise<boolean> {
+  const existing = loadParentPin()
+  if (existing) {
+    const entered = await askPin({
+      mode: 'unlock',
+      title: 'Changer le code',
+      message: 'Entre d’abord le code actuel.',
+    })
+    if (!entered) return false
+    if (entered !== existing) {
+      useRoomStore.getState().flashToast('Code incorrect', 'error')
+      return false
+    }
+  }
+  const next = await askPin({
+    mode: 'set',
+    title: 'Nouveau code parent',
+    message: 'Choisis un nouveau code à 4 chiffres.',
+  })
+  if (!next) return false
+  saveParentPin(next)
+  useRoomStore.getState().flashToast('Code parent mis à jour', 'ok')
+  return true
+}
+
+/** Clear PIN after confirming current code (drawer must already be unlocked). */
+export async function resetParentPin(): Promise<boolean> {
+  const existing = loadParentPin()
+  if (!existing) {
+    useRoomStore.getState().flashToast('Aucun code enregistré', 'info')
+    return true
+  }
+  const entered = await askPin({
+    mode: 'unlock',
+    title: 'Effacer le code',
+    message: 'Confirme avec le code actuel. Tu pourras en créer un nouveau ensuite.',
+  })
+  if (!entered) return false
+  if (entered !== existing) {
+    useRoomStore.getState().flashToast('Code incorrect', 'error')
+    return false
+  }
+  clearParentPin()
+  useRoomStore.getState().setParentLock(false)
+  useRoomStore.getState().flashToast('Code parent effacé', 'ok')
+  return true
+}

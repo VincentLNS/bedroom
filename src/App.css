@@ -1765,6 +1765,14 @@ button:focus:not(:focus-visible) {
   line-height: 1.3;
 }
 
+.gallery-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
 /* ── Room switcher + door labels ─────────────────────────── */
 
 .room-switcher {
