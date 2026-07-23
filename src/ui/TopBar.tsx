@@ -552,6 +552,7 @@ export function TopBar({
                   role="group"
                   aria-label="Plus d’options"
                 >
+                  {phone && <RoomSwitcher variant="strip" />}
                   {phone && sceneTools}
                   {wallAndViewTools}
                   {playTools}

@@ -24,7 +24,6 @@ import { SceneHud } from './ui/CoachTip'
 import { GestureCoach } from './ui/GestureCoach'
 import { LoadingSplash } from './ui/LoadingSplash'
 import { PhotoModeOverlay } from './ui/PhotoMode'
-import { RoomSwitcher } from './ui/RoomSwitcher'
 import { RotateDial } from './ui/RotateDial'
 import { ShareQrModal } from './ui/ShareQrModal'
 import { SoundBridge } from './ui/SoundBridge'
@@ -263,11 +262,6 @@ export default function App() {
         onOpenParent={() => setParentOpen(true)}
         onOpenCoPlay={() => setCoPlayOpen(true)}
       />
-      {phone && !photoMode && (
-        <div className="phone-room-strip">
-          <RoomSwitcher variant="strip" />
-        </div>
-      )}
       <div className="workspace">
         {!photoMode && <CataloguePanel />}
         <main className="scene-host">

@@ -1277,18 +1277,6 @@
     font-size: 0.78rem;
   }
 
-  .phone-room-strip {
-    flex: 0 0 auto;
-    display: flex;
-    justify-content: center;
-    padding: 0.2rem 0.55rem 0.35rem;
-    padding-left: max(0.55rem, env(safe-area-inset-left, 0px));
-    padding-right: max(0.55rem, env(safe-area-inset-right, 0px));
-    background:
-      linear-gradient(180deg, rgba(255, 245, 248, 0.94), rgba(255, 240, 246, 0.55));
-    border-bottom: 2px dashed color-mix(in srgb, var(--mint) 40%, transparent);
-  }
-
   .room-switcher--strip {
     position: static;
     left: auto;
