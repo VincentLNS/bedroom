@@ -30,6 +30,16 @@ const CATEGORY_LABELS: Record<CatalogCategory, string> = {
   animals: 'Animaux',
 }
 
+const CATEGORY_ICONS: Record<CatalogCategory, string> = {
+  beds: '🛏️',
+  desks: '✏️',
+  storage: '📦',
+  toys: '🧸',
+  soft: '🛋️',
+  decor: '🌸',
+  animals: '🐾',
+}
+
 type TabId = CatalogCategory | 'favorites' | 'recents' | 'challenges'
 
 function itemTint(item: CatalogItem): string {
@@ -336,8 +346,10 @@ export function CataloguePanel() {
               : 'catalogue-tab'
           }
           onClick={() => setTab('favorites')}
+          aria-label="Favoris"
+          title="Favoris"
         >
-          ★ Favoris
+          <span aria-hidden="true">⭐</span>
         </button>
         <button
           type="button"
@@ -347,8 +359,10 @@ export function CataloguePanel() {
               : 'catalogue-tab'
           }
           onClick={() => setTab('recents')}
+          aria-label="Récents"
+          title="Récents"
         >
-          Récents
+          <span aria-hidden="true">🕐</span>
         </button>
         <button
           type="button"
@@ -358,8 +372,10 @@ export function CataloguePanel() {
               : 'catalogue-tab'
           }
           onClick={() => setTab('challenges')}
+          aria-label="Défis"
+          title="Défis"
         >
-          Défis
+          <span aria-hidden="true">🏆</span>
         </button>
         {CATEGORIES.map((cat) => (
           <button
@@ -371,8 +387,10 @@ export function CataloguePanel() {
                 : 'catalogue-tab'
             }
             onClick={() => setTab(cat)}
+            aria-label={CATEGORY_LABELS[cat]}
+            title={CATEGORY_LABELS[cat]}
           >
-            {CATEGORY_LABELS[cat]}
+            <span aria-hidden="true">{CATEGORY_ICONS[cat]}</span>
           </button>
         ))}
       </nav>
