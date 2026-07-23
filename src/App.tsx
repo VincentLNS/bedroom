@@ -275,7 +275,6 @@ export default function App() {
           <Suspense fallback={null}>
             <BedroomScene onReady={() => setSceneReady(true)} />
           </Suspense>
-          {!phone && <RoomSwitcher />}
           <ActionDock />
           <RotateDial />
           <Toast />

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useCoPlayPresence } from '../coplay/useCoPlayPresence'
 import { useRoomStore, type WallMode } from '../store/roomStore'
 import { CoachTip } from './CoachTip'
+import { RoomSwitcher } from './RoomSwitcher'
 import { useCoarsePointer } from './useCoarsePointer'
 import { usePhoneLayout } from './usePhoneLayout'
 import { askPrompt } from './dialogStore'
@@ -414,6 +415,11 @@ export function TopBar({
               </button>
             )}
           </div>
+          {!phone && (
+            <div className="top-bar-room-nav">
+              <RoomSwitcher />
+            </div>
+          )}
           <div
             className="mode-toggle"
             role="group"

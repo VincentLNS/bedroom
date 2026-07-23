@@ -1984,6 +1984,26 @@ button:focus:not(:focus-visible) {
   box-shadow: 0 4px 10px color-mix(in srgb, var(--ink) 18%, transparent);
 }
 
+/* Room nav lives in the top bar, not floating over the scene. */
+.top-bar-room-nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.top-bar-room-nav .room-switcher {
+  position: static;
+  transform: none;
+  left: auto;
+  bottom: auto;
+}
+.top-bar-room-nav .room-switcher--expanded {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 30;
+  animation: none;
+}
+
 .app--photo .room-switcher {
   display: none;
 }
